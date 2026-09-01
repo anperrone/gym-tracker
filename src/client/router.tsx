@@ -2,10 +2,12 @@ import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/re
 import { AuthenticatedLayout } from '@/features/auth/AuthenticatedLayout';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { PlanDetailPage } from '@/features/plans/PlanDetailPage';
+import { WorkoutSessionPage } from '@/features/workouts/WorkoutSessionPage';
 import { ExercisesPage } from './routes/exercises';
 import { HomePage } from './routes/home';
 import { MeasurementsPage } from './routes/measurements';
 import { PlansPage } from './routes/plans';
+import { WorkoutPage } from './routes/workout';
 
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
 
@@ -56,6 +58,21 @@ const planDetailRoute = createRoute({
   },
 });
 
+const workoutRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/workout',
+  component: WorkoutPage,
+});
+
+const workoutSessionRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/workout/$sessionId',
+  component: function WorkoutSessionRoute() {
+    const { sessionId } = workoutSessionRoute.useParams();
+    return <WorkoutSessionPage sessionId={sessionId} />;
+  },
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   authenticatedRoute.addChildren([
@@ -64,6 +81,8 @@ const routeTree = rootRoute.addChildren([
     exercisesRoute,
     plansRoute,
     planDetailRoute,
+    workoutRoute,
+    workoutSessionRoute,
   ]),
 ]);
 

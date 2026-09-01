@@ -4,6 +4,7 @@ import {
   type CreatePlanDayInput,
   type CreatePlanExerciseInput,
   type CreatePlanInput,
+  type CreateSetInput,
   type ExerciseDto,
   type ExerciseFilters,
   exerciseSchema,
@@ -21,9 +22,16 @@ import {
   type PlanSummaryDto,
   planDetailSchema,
   planSummarySchema,
+  type StartSessionInput,
   type UpdateExerciseInput,
   type UpdatePlanExerciseInput,
   type UpdatePlanInput,
+  type UpdateSessionInput,
+  type UpdateSetInput,
+  type WorkoutSessionDetailDto,
+  type WorkoutSessionSummaryDto,
+  workoutSessionDetailSchema,
+  workoutSessionSummarySchema,
 } from '@shared/schemas';
 import { type ZodType, z } from 'zod';
 
@@ -223,5 +231,85 @@ export function deletePlanExercise(
     `/api/plans/${planId}/days/${dayId}/exercises/${peId}`,
     'DELETE',
     planDetailSchema,
+  );
+}
+
+// --- Allenamenti ---
+
+export function fetchSessions(): Promise<WorkoutSessionSummaryDto[]> {
+  return getJson('/api/sessions', z.array(workoutSessionSummarySchema));
+}
+
+export function fetchSessionDetail(id: string): Promise<WorkoutSessionDetailDto> {
+  return getJson(`/api/sessions/${id}`, workoutSessionDetailSchema);
+}
+
+export function startSession(input: StartSessionInput): Promise<WorkoutSessionDetailDto> {
+  return sendJson('/api/sessions', 'POST', workoutSessionDetailSchema, input);
+}
+
+export function updateSession(
+  id: string,
+  input: UpdateSessionInput,
+): Promise<WorkoutSessionDetailDto> {
+  return sendJson(`/api/sessions/${id}`, 'PATCH', workoutSessionDetailSchema, input);
+}
+
+export async function deleteSession(id: string): Promise<void> {
+  const res = await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
+  if (!res.ok) {
+    throw new ApiError(res.status, 'Eliminazione fallita');
+  }
+}
+
+export function addSessionExercise(
+  id: string,
+  exerciseId: string,
+): Promise<WorkoutSessionDetailDto> {
+  return sendJson(`/api/sessions/${id}/exercises`, 'POST', workoutSessionDetailSchema, {
+    exerciseId,
+  });
+}
+
+export function deleteSessionExercise(id: string, seId: string): Promise<WorkoutSessionDetailDto> {
+  return sendJson(`/api/sessions/${id}/exercises/${seId}`, 'DELETE', workoutSessionDetailSchema);
+}
+
+export function addSet(
+  id: string,
+  seId: string,
+  input: CreateSetInput,
+): Promise<WorkoutSessionDetailDto> {
+  return sendJson(
+    `/api/sessions/${id}/exercises/${seId}/sets`,
+    'POST',
+    workoutSessionDetailSchema,
+    input,
+  );
+}
+
+export function updateSet(
+  id: string,
+  seId: string,
+  setId: string,
+  input: UpdateSetInput,
+): Promise<WorkoutSessionDetailDto> {
+  return sendJson(
+    `/api/sessions/${id}/exercises/${seId}/sets/${setId}`,
+    'PATCH',
+    workoutSessionDetailSchema,
+    input,
+  );
+}
+
+export function deleteSet(
+  id: string,
+  seId: string,
+  setId: string,
+): Promise<WorkoutSessionDetailDto> {
+  return sendJson(
+    `/api/sessions/${id}/exercises/${seId}/sets/${setId}`,
+    'DELETE',
+    workoutSessionDetailSchema,
   );
 }

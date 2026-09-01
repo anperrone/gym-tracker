@@ -10,7 +10,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'measurements', label: 'Misure', Icon: RulerIcon, to: '/measurements' },
   { key: 'exercises', label: 'Esercizi', Icon: ListIcon, to: '/exercises' },
   { key: 'plans', label: 'Schede', Icon: ClipboardIcon, to: '/plans' },
-  { key: 'workout', label: 'Allena', Icon: DumbbellIcon },
+  { key: 'workout', label: 'Allena', Icon: DumbbellIcon, to: '/workout' },
   { key: 'progress', label: 'Progressi', Icon: ChartIcon },
 ];
 
