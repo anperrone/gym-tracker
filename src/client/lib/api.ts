@@ -325,5 +325,8 @@ export function fetchProgressExercises(): Promise<ProgressExerciseDto[]> {
 }
 
 export function fetchExerciseProgress(exerciseId: string): Promise<ProgressPointDto[]> {
-  return getJson(`/api/progress/exercises/${exerciseId}`, z.array(progressPointSchema));
+  return getJson(
+    `/api/progress/exercises/${encodeURIComponent(exerciseId)}`,
+    z.array(progressPointSchema),
+  );
 }

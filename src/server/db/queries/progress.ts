@@ -2,7 +2,7 @@ import { and, asc, desc, eq, isNotNull, sql } from 'drizzle-orm';
 import { roundTo } from '../../../shared/calc';
 import type { ProgressExerciseDto, ProgressPointDto } from '../../../shared/schemas';
 import type { Db } from '../client';
-import { exercises, sessionExercises, sessionSets, workoutSessions } from '../schema';
+import { sessionExercises, sessionSets, workoutSessions } from '../schema';
 
 // 1RM stimato (Epley) calcolato in SQL: 30.0 forza la divisione in virgola mobile.
 const oneRepMax = sql<number>`${sessionSets.weight} * (1 + ${sessionSets.reps} / 30.0)`;
@@ -12,10 +12,13 @@ export async function listProgressExercises(
   db: Db,
   userId: string,
 ): Promise<ProgressExerciseDto[]> {
+  // Nome dallo **snapshot** in session_exercises (non dal catalogo): la progressione resta
+  // anche se il nome cambia. Serve un exercise_id non nullo come chiave stabile per la serie;
+  // le voci di catalogo eliminate (id → NULL) non sono graficabili e restano escluse.
   const rows = await db
     .select({
       exerciseId: sessionExercises.exerciseId,
-      exerciseName: exercises.name,
+      exerciseName: sql<string>`max(${sessionExercises.exerciseName})`,
       sessionCount: sql<number>`count(distinct ${workoutSessions.id})`,
       bestWeight: sql<number>`max(${sessionSets.weight})`,
       best1RM: sql<number>`max(${oneRepMax})`,
@@ -24,10 +27,10 @@ export async function listProgressExercises(
     .from(sessionSets)
     .innerJoin(sessionExercises, eq(sessionSets.sessionExerciseId, sessionExercises.id))
     .innerJoin(workoutSessions, eq(sessionExercises.workoutSessionId, workoutSessions.id))
-    .innerJoin(exercises, eq(sessionExercises.exerciseId, exercises.id))
     .where(
       and(
         eq(workoutSessions.userId, userId),
+        isNotNull(sessionExercises.exerciseId),
         isNotNull(sessionSets.weight),
         isNotNull(sessionSets.reps),
       ),

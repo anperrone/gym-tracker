@@ -67,6 +67,8 @@ describe('API progressi', () => {
     expect(rows[0].bestWeight).toBe(80);
     // best 1RM = max(80·(1+8/30)=101.33 ; 70·1.333=93.3 ; 60·1.4=84) = 101.3
     expect(rows[0].best1RM).toBe(101.3);
+    // lastPerformedAt = data della sessione (conversione secondi→ms corretta)
+    expect(rows[0].lastPerformedAt).toBe('2026-01-01T00:00:00.000Z');
   });
 
   it('restituisce la progressione per esercizio (per sessione, crescente)', async () => {

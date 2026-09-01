@@ -41,6 +41,11 @@ export function getChartColors(): ChartColors {
   };
 }
 
+/** Data breve (gg/mm) per l'asse X e i tooltip dei grafici di andamento. */
+export function shortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+}
+
 /** Etichetta numerica compatta per assi/tooltip (max 1 decimale, senza zeri inutili). */
 export function formatAxisValue(value: number): string {
   if (!Number.isFinite(value)) return '';

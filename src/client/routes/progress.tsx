@@ -1,4 +1,4 @@
-import { lazy, type ReactNode, Suspense, useState } from 'react';
+import { lazy, type ReactNode, Suspense, useEffect, useState } from 'react';
 import type { ProgressMetric } from '@/features/progress/ProgressChart';
 import { useExerciseProgress, useProgressExercises } from '@/features/progress/useProgress';
 
@@ -26,8 +26,13 @@ export function ProgressPage() {
   const [selectedId, setSelectedId] = useState('');
   const [metric, setMetric] = useState<ProgressMetric>('topWeight');
 
-  const selected = selectedId || exercises[0]?.exerciseId || '';
-  const { data: points = [] } = useExerciseProgress(selected);
+  // Fissa la selezione al primo esercizio una sola volta: un refetch/riordino non deve
+  // cambiare il grafico sotto l'utente.
+  useEffect(() => {
+    if (selectedId === '' && exercises.length > 0) setSelectedId(exercises[0].exerciseId);
+  }, [exercises, selectedId]);
+
+  const { data: points = [], isPending: pointsPending } = useExerciseProgress(selectedId);
   const unit = METRICS.find((m) => m.key === metric)?.unit ?? '';
 
   return (
@@ -44,7 +49,7 @@ export function ProgressPage() {
           <>
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <select
-                value={selected}
+                value={selectedId}
                 onChange={(e) => setSelectedId(e.target.value)}
                 aria-label="Esercizio"
                 className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-2 py-2 text-sm text-text"
@@ -74,7 +79,11 @@ export function ProgressPage() {
               </fieldset>
             </div>
             <Suspense fallback={chartFallback}>
-              <ProgressChart points={points} metric={metric} unit={unit} />
+              {pointsPending ? (
+                chartFallback
+              ) : (
+                <ProgressChart points={points} metric={metric} unit={unit} />
+              )}
             </Suspense>
           </>
         )}
