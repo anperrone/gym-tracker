@@ -102,7 +102,12 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 Granularità alta ora; scomposizione in task al momento dell'implementazione (dopo M1).
 
-- **M2 Misure** — schema `measurement_types/entries/values` + seed metriche default; API CRUD scoped; form inserimento; storico; grafico peso.
+- **M2 Misure** — su branch `feat/m2-measurements`:
+  - [x] **T2.1** schema `measurement_types/entries/values` + seed 9 metriche default (migrazione `0001`) + test
+  - [ ] **T2.2** API scoped per utente: GET tipi (default+custom), CRUD misurazioni (create con valori, storico) + Zod
+  - [ ] **T2.3** Frontend: pagina Misure, form inserimento (9 metriche), storico
+  - [ ] **T2.4** Grafico andamento (peso + circonferenze) con Recharts
+  - [ ] **T2.5** Test integrazione (isolamento per utente) + E2E
 - **M3 Catalogo esercizi** — schema `exercises` + seed (Appendix A); API list/search/create-custom/link-canonical; picker UI.
 - **M4 Schede** — schema `workout_plans/plan_days/plan_exercises`; API CRUD; plan builder UI.
 - **M5 Log allenamento** — schema `workout_sessions/session_exercises/session_sets`; API upsert idempotente (`client_id`); UI logging peso variabile per serie.
