@@ -11,7 +11,7 @@ export function MeasurementHistory() {
     return <p className="text-sm text-slate-400">Nessuna misurazione ancora.</p>;
 
   return (
-    <ul className="space-y-3">
+    <ul aria-label="Storico misurazioni" className="space-y-3">
       {entries.map((e) => (
         <li key={e.id} className="rounded-lg border border-slate-200 bg-white p-3">
           <div className="flex items-center justify-between">
