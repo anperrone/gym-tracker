@@ -17,7 +17,8 @@ async function seedWeight(
 }
 
 test('la sintesi mostra ultimo valore e delta vs misura precedente', async ({ page }) => {
-  await login(page, 'e2e-overview@example.com');
+  // Email unica per run: la serie a due punti resta pulita anche sul D1 locale persistente.
+  await login(page, `e2e-overview-${Date.now()}@example.com`);
   await seedWeight(page, '2025-01-01', 70);
   await seedWeight(page, '2025-02-01', 72.5);
 

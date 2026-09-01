@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test';
 
-async function login(page: import('@playwright/test').Page, email = 'e2e-measures@example.com') {
+// Email unica per run: lo storico dell'utente resta pulito sul D1 locale persistente.
+async function login(
+  page: import('@playwright/test').Page,
+  email = `e2e-measures-${Date.now()}@example.com`,
+) {
   const res = await page.request.post(`/auth/test-login?email=${encodeURIComponent(email)}`);
   expect(res.ok()).toBeTruthy();
 }

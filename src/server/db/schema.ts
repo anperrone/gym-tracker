@@ -1,5 +1,13 @@
 import { sql } from 'drizzle-orm';
-import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import {
+  type AnySQLiteColumn,
+  index,
+  integer,
+  real,
+  sqliteTable,
+  text,
+} from 'drizzle-orm/sqlite-core';
+import { EQUIPMENT_VALUES } from '../../shared/schemas';
 
 // Schema Drizzle (D1 / SQLite).
 
@@ -92,3 +100,35 @@ export type MeasurementEntry = typeof measurementEntries.$inferSelect;
 export type NewMeasurementEntry = typeof measurementEntries.$inferInsert;
 export type MeasurementValue = typeof measurementValues.$inferSelect;
 export type NewMeasurementValue = typeof measurementValues.$inferInsert;
+
+// --- Catalogo esercizi (M3) ---
+
+// Sorgente unica dei valori equipment: la tupla condivisa (evita drift DB/API/UI).
+export const EQUIPMENT = EQUIPMENT_VALUES;
+
+// Esercizi: user_id NULL = catalogo globale (curato dall'admin); valorizzato = custom utente.
+// canonical_exercise_id collega un custom/testo libero a una voce di catalogo per unificare la progressione.
+export const exercises = sqliteTable(
+  'exercises',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    muscleGroup: text('muscle_group'),
+    equipment: text('equipment', { enum: EQUIPMENT }).notNull().default('other'),
+    isCustom: integer('is_custom', { mode: 'boolean' }).notNull().default(false),
+    canonicalExerciseId: text('canonical_exercise_id').references(
+      (): AnySQLiteColumn => exercises.id,
+      { onDelete: 'set null' },
+    ),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [
+    index('exercises_user_id_idx').on(t.userId),
+    index('exercises_equipment_idx').on(t.equipment),
+  ],
+);
+
+export type Exercise = typeof exercises.$inferSelect;
+export type NewExercise = typeof exercises.$inferInsert;
+export type Equipment = (typeof EQUIPMENT)[number];

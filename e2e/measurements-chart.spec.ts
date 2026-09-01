@@ -22,7 +22,8 @@ async function seedWeight(
 const Y_TICKS = '.recharts-yAxis-tick-labels .recharts-cartesian-axis-tick-value';
 
 test('il grafico mostra le etichette dell’asse Y senza tagli', async ({ page }) => {
-  await login(page, 'e2e-chart@example.com');
+  // Email unica per run: la serie resta pulita sul D1 locale persistente.
+  await login(page, `e2e-chart-${Date.now()}@example.com`);
   await seedWeight(page, '2025-01-01', 70);
   await seedWeight(page, '2025-02-01', 72.4);
 
