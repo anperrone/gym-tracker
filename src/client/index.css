@@ -10,10 +10,10 @@
   --surface-2: #f0f2f5;
   --border: #e5e8ec;
   --text: #0f172a;
-  --text-muted: #64748b;
-  --accent: #059669;
+  --text-muted: #5b6673;
+  --accent: #047857;
   --accent-fg: #ffffff;
-  --positive: #059669;
+  --positive: #047857;
   --negative: #dc2626;
 
   /* Grafici (letti da chartTheme.ts) */

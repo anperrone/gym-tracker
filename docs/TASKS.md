@@ -137,7 +137,7 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
   - Verify: unit calcolo Δ; E2E overview mostra ultimo valore + Δ; `npm run check` verde
   - Files: `src/client/features/measurements/StatOverview.tsx`, `MeasurementsPage.tsx`, `MeasurementHistory.tsx`, `MeasurementForm.tsx`, test
 
-- [ ] **TU.6 — A11y + regressione E2E finale**
+- [x] **TU.6 — A11y + regressione E2E finale**
   - Acceptance: contrasto **AA** su testo/accento in entrambi i temi; E2E completo (toggle tema persistito dopo reload + asse Y visibile) verde; bundle non peggiora sensibilmente (Recharts resta lazy)
   - Verify: `npm run check` + `npm run test:e2e` verdi; check contrasto (axe/manuale)
   - Files: `e2e/*.spec.ts`, eventuale nota in `docs/`

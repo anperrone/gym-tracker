@@ -78,14 +78,17 @@ Palette proposta (da validare a AA in implementazione):
 | surface-2 | `#171e27` | `#f0f2f5` |
 | border | `#232c38` | `#e5e8ec` |
 | text | `#e6edf3` | `#0f172a` |
-| text-muted | `#8b96a5` | `#64748b` |
-| accent | `#34d399` | `#059669` |
+| text-muted | `#8b96a5` | `#5b6673` |
+| accent | `#34d399` | `#047857` |
 | accent-fg | `#07130d` | `#ffffff` |
-| positive | `#34d399` | `#059669` |
+| positive | `#34d399` | `#047857` |
 | negative | `#f87171` | `#dc2626` |
 
-> Nota: i colori dei **grafici** verranno validati con il metodo della skill `dataviz`
-> (contrasto, leggibilità in entrambi i temi) in fase di implementazione.
+> **Contrasto validato (WCAG AA)** in entrambi i temi: testo/superfici ≥ 15:1; testo-muted
+> ≥ 4.5:1; accento (bianco su accento nei bottoni, e accento come testo su superficie) ≥ 5:1.
+> Nel tema chiaro l'accento è stato scurito da `#059669` (3.77:1, sotto AA) a `#047857`
+> (5.48:1) e il muted da `#64748b` (4.44:1) a `#5b6673` (5.45:1). I colori del grafico
+> derivano dai token (`--chart-*`), quindi ereditano la stessa validazione.
 
 ### 4.2 Tipografia & forma
 - Font: **system stack** (zero costo/offline) + `font-variant-numeric: tabular-nums` sui
