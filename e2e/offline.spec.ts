@@ -34,8 +34,19 @@ test('logging offline: optimistic immediato e sync senza duplicati al ritorno on
 
   const sessionId = page.url().split('/workout/')[1];
 
+  // onlineManager di TanStack reagisce agli eventi window online/offline: li emettiamo
+  // esplicitamente perché il solo setOffline non li dispatcha in modo affidabile su CI.
+  const goOffline = async () => {
+    await context.setOffline(true);
+    await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+  };
+  const goOnline = async () => {
+    await context.setOffline(false);
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  };
+
   // === Ciclo 1: aggiorna il peso offline → sincronizza al ritorno online ===
-  await context.setOffline(true);
+  await goOffline();
   const weight1 = page.getByLabel('Peso serie 1');
   await weight1.fill('100');
   await expect(weight1).toHaveValue('100'); // attende che lo stato React rifletta il valore
@@ -44,13 +55,13 @@ test('logging offline: optimistic immediato e sync senza duplicati al ritorno on
       (r) => /\/sets\/[^/]+$/.test(r.url()) && r.request().method() === 'PATCH',
     );
     await weight1.blur();
-    await context.setOffline(false);
+    await goOnline();
     await patched;
   }
   await page.waitForLoadState('networkidle');
 
   // === Ciclo 2: aggiungi una serie offline (optimistic immediato) → sincronizza ===
-  await context.setOffline(true);
+  await goOffline();
   await page.getByRole('button', { name: 'Aggiungi serie' }).click();
   // L'optimistic update mostra subito la nuova serie, anche offline.
   await expect(page.getByLabel('Peso serie 2')).toBeVisible({ timeout: 10_000 });
@@ -58,7 +69,7 @@ test('logging offline: optimistic immediato e sync senza duplicati al ritorno on
     const posted = page.waitForResponse(
       (r) => /\/sets$/.test(r.url()) && r.request().method() === 'POST',
     );
-    await context.setOffline(false);
+    await goOnline();
     await posted;
   }
 
