@@ -4,6 +4,7 @@ import { exercises } from './routes/exercises';
 import { me } from './routes/me';
 import { measurements } from './routes/measurements';
 import { plans } from './routes/plans';
+import { progress } from './routes/progress';
 import { sessions } from './routes/sessions';
 import type { AppEnv } from './types';
 
@@ -16,6 +17,7 @@ app.route('/api/measurements', measurements);
 app.route('/api/exercises', exercises);
 app.route('/api/plans', plans);
 app.route('/api/sessions', sessions);
+app.route('/api/progress', progress);
 
 // OAuth (fuori da /api: redirect di navigazione)
 app.route('/auth', auth);
