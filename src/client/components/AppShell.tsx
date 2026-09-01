@@ -1,11 +1,17 @@
+import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
-const NAV_ITEMS = [
-  { key: 'measurements', label: 'Misure', icon: '📏' },
+type NavItem = { key: string; label: string; icon: string; to?: string };
+
+const NAV_ITEMS: NavItem[] = [
+  { key: 'measurements', label: 'Misure', icon: '📏', to: '/measurements' },
   { key: 'plans', label: 'Schede', icon: '📋' },
   { key: 'workout', label: 'Allena', icon: '🏋️' },
   { key: 'progress', label: 'Progressi', icon: '📈' },
-] as const;
+];
+
+const itemClass =
+  'flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs text-slate-600';
 
 export function AppShell({
   children,
@@ -27,18 +33,28 @@ export function AppShell({
         aria-label="Navigazione principale"
         className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-4 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]"
       >
-        {NAV_ITEMS.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            className="flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs text-slate-600"
-          >
-            <span aria-hidden="true" className="text-lg">
-              {item.icon}
-            </span>
-            {item.label}
-          </button>
-        ))}
+        {NAV_ITEMS.map((item) =>
+          item.to ? (
+            <Link
+              key={item.key}
+              to={item.to}
+              className={itemClass}
+              activeProps={{ className: `${itemClass} text-slate-900` }}
+            >
+              <span aria-hidden="true" className="text-lg">
+                {item.icon}
+              </span>
+              {item.label}
+            </Link>
+          ) : (
+            <button key={item.key} type="button" disabled className={`${itemClass} opacity-40`}>
+              <span aria-hidden="true" className="text-lg">
+                {item.icon}
+              </span>
+              {item.label}
+            </button>
+          ),
+        )}
       </nav>
     </div>
   );
