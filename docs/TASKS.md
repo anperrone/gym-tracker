@@ -1,7 +1,7 @@
 # Tasks: Gym Tracker
 
 > Fase 3 del workflow spec-driven. Riferimenti: `SPEC.md` (APPROVED), `PLAN.md` (APPROVED), `SPEC-ui-redesign.md`.
-> Stato: **APPROVED** (2026-09-01) — implementazione in corso. **Ripriorizzato 2026-09-01**: fatti M0/M1/M2/**MU**/**M3**/**M4**; in corso **M5 (Log allenamento)**, poi M6.
+> Stato: **APPROVED** (2026-09-01) — implementazione in corso. **Ripriorizzato 2026-09-01**: fatti M0/M1/M2/**MU**/**M3**/**M4**/**M5**; in corso **M6 (Offline/PWA)**, poi M7.
 
 Task discreti, ordinati per dipendenza. Ogni task: ≤ ~5 file, criteri di accettazione e passo di verifica espliciti. Dettagliati per **M0** e **M1**; M2–M9 restano a granularità alta e verranno scomposti al loro turno.
 
@@ -299,4 +299,4 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ## Prossimo passo
 
-Prossima implementazione: **M5 — Log allenamento**, a partire da **T5.1** (schema sessioni/esercizi/serie). Un task alla volta, TDD dove ha senso, `npm run check` verde prima di procedere; chiusura milestone via PR verso `main`. Poi **M6 Offline/PWA**.
+Prossima implementazione: **M6 — Offline/PWA**, a partire da **T6.1** (PWA installabile). Un task alla volta, `npm run check` verde prima di procedere; chiusura milestone via PR verso `main`. Poi **M7 Progressi & grafici**.
