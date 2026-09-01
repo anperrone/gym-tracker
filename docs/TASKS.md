@@ -288,31 +288,31 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ---
 
-## M7 — Progressi & grafici (priorità corrente)
+## M7 — Progressi & grafici ✅ (branch `feat/m7-progress`)
 
 > Avviato 2026-09-01 dopo M6. Branch: `feat/m7-progress`. Riferimento: `SPEC.md` §5 (Metriche derivate) e criteri: *grafico di progressione (peso corporeo e carico per esercizio) senza configurazione*. Dipende da M2 (misure) + M5 (log). Metriche derivate dalle serie: **peso massimo**, **volume** (Σ peso×reps), **1RM stimato** (Epley), **PR**. Aggregazione per esercizio nel tempo (per sessione). Grafico peso corporeo riusa la serie misure (M2).
 
-- [ ] **T7.1 — Calcoli puri (Epley 1RM, volume) in shared + test**
+- [x] **T7.1 — Calcoli puri (Epley 1RM, volume) in shared + test**
   - Acceptance: `epley1RM(weight, reps)` = `weight·(1+reps/30)`, helper volume/arrotondamento; funzioni pure testabili (client+server)
   - Verify: unit su 1RM (reps=1 → weight), volume; `npm run check` verde
   - Files: `src/shared/calc.ts`, `src/shared/calc.test.ts`
 
-- [ ] **T7.2 — API progressi: lista esercizi loggati + serie per esercizio (aggregazione) + Zod**
+- [x] **T7.2 — API progressi: lista esercizi loggati + serie per esercizio (aggregazione) + Zod**
   - Acceptance: `GET /api/progress/exercises` (esercizi con dati loggati: nome, #sessioni, peso max, 1RM best, ultima data); `GET /api/progress/exercises/:exerciseId` (serie per sessione: data, peso max, volume, 1RM best). Scoped per `userId`; solo serie con peso+reps
   - Verify: test integrazione (aggregazione, PR/max, isolamento, anon 401); `npm run check` verde
   - Files: `src/shared/schemas.ts`, `src/server/db/queries/progress.ts`, `src/server/routes/progress.ts`, `src/server/index.ts`, `tests/progress/api.test.ts`
 
-- [ ] **T7.3 — Frontend: pagina Progressi (selettore esercizio + metrica + grafico)**
+- [x] **T7.3 — Frontend: pagina Progressi (selettore esercizio + metrica + grafico)**
   - Acceptance: client API + hook; `ProgressPage` con selettore esercizio, toggle metrica (peso max / 1RM / volume), grafico progressione (Recharts lazy, a tema); stati loading/empty; nav "Progressi" attivata + rotta `/progress`
   - Verify: test render; `npm run check` verde
   - Files: `src/client/lib/api.ts`, `src/client/features/progress/useProgress.ts`, `ProgressPage.tsx`, `ProgressChart.tsx`, `src/client/routes/progress.tsx`, `src/client/components/AppShell.tsx`, `src/client/router.tsx`
 
-- [ ] **T7.4 — Andamento peso corporeo sulla pagina Progressi**
+- [x] **T7.4 — Andamento peso corporeo sulla pagina Progressi**
   - Acceptance: sezione peso corporeo che riusa la serie misure (M2, `mt_weight`) con `MeasurementChart`; stato vuoto a tema
   - Verify: test render; `npm run check` verde
   - Files: `src/client/features/progress/ProgressPage.tsx`
 
-- [ ] **T7.5 — E2E progressi**
+- [x] **T7.5 — E2E progressi**
   - Acceptance: E2E — log di una sessione con serie → pagina Progressi mostra l'esercizio e il grafico di progressione; isolamento
   - Verify: `npm run test:e2e` verde
   - Files: `e2e/progress.spec.ts`
