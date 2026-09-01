@@ -1,10 +1,7 @@
-import type {
-  CreatePlanExerciseInput,
-  PlanDetailDto,
-  UpdatePlanExerciseInput,
-} from '@shared/schemas';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { CreatePlanExerciseInput, UpdatePlanExerciseInput } from '@shared/schemas';
+import { useQuery } from '@tanstack/react-query';
 import * as api from '@/lib/api';
+import { useDetailMutation } from '@/lib/detailMutation';
 import { planKeys } from './usePlans';
 
 export function usePlanDetail(id: string) {
@@ -17,35 +14,33 @@ export function usePlanDetail(id: string) {
   });
 }
 
-/** Mutation che restituisce il dettaglio aggiornato: aggiorna la cache del dettaglio + invalida la lista. */
-function useDetailMutation<TArgs>(planId: string, fn: (args: TArgs) => Promise<PlanDetailDto>) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: fn,
-    onSuccess: (detail) => {
-      qc.setQueryData(planKeys.detail(planId), detail);
-      qc.invalidateQueries({ queryKey: planKeys.list });
-    },
-  });
-}
-
 /** Tutte le mutation del plan builder per una scheda. */
 export function usePlanMutations(planId: string) {
+  const detailKey = planKeys.detail(planId);
   return {
-    addDay: useDetailMutation(planId, (name: string) => api.addPlanDay(planId, { name })),
-    deleteDay: useDetailMutation(planId, (dayId: string) => api.deletePlanDay(planId, dayId)),
+    addDay: useDetailMutation(detailKey, planKeys.list, (name: string) =>
+      api.addPlanDay(planId, { name }),
+    ),
+    deleteDay: useDetailMutation(detailKey, planKeys.list, (dayId: string) =>
+      api.deletePlanDay(planId, dayId),
+    ),
     addExercise: useDetailMutation(
-      planId,
+      detailKey,
+      planKeys.list,
       (args: { dayId: string; input: CreatePlanExerciseInput }) =>
         api.addPlanExercise(planId, args.dayId, args.input),
     ),
     updateExercise: useDetailMutation(
-      planId,
+      detailKey,
+      planKeys.list,
       (args: { dayId: string; peId: string; input: UpdatePlanExerciseInput }) =>
         api.updatePlanExercise(planId, args.dayId, args.peId, args.input),
     ),
-    deleteExercise: useDetailMutation(planId, (args: { dayId: string; peId: string }) =>
-      api.deletePlanExercise(planId, args.dayId, args.peId),
+    deleteExercise: useDetailMutation(
+      detailKey,
+      planKeys.list,
+      (args: { dayId: string; peId: string }) =>
+        api.deletePlanExercise(planId, args.dayId, args.peId),
     ),
   };
 }

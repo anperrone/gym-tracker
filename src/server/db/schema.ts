@@ -6,6 +6,7 @@ import {
   real,
   sqliteTable,
   text,
+  uniqueIndex,
 } from 'drizzle-orm/sqlite-core';
 import { EQUIPMENT_VALUES } from '../../shared/schemas';
 
@@ -192,3 +193,77 @@ export type PlanDay = typeof planDays.$inferSelect;
 export type NewPlanDay = typeof planDays.$inferInsert;
 export type PlanExercise = typeof planExercises.$inferSelect;
 export type NewPlanExercise = typeof planExercises.$inferInsert;
+
+// --- Allenamenti svolti / log (M5) ---
+
+// Una sessione di allenamento. plan_day_id NULL = allenamento libero.
+// client_id abilita l'upsert idempotente (replay/offline).
+export const workoutSessions = sqliteTable(
+  'workout_sessions',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    planDayId: text('plan_day_id').references(() => planDays.id, { onDelete: 'set null' }),
+    performedAt: integer('performed_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    durationSeconds: integer('duration_seconds'),
+    notes: text('notes'),
+    status: text('status', { enum: ['in_progress', 'completed'] })
+      .notNull()
+      .default('in_progress'),
+    clientId: text('client_id'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [
+    index('workout_sessions_user_id_idx').on(t.userId),
+    // Unique per idempotenza: un replay dello stesso (user, client_id) non duplica.
+    // I client_id NULL (inserimenti diretti) restano distinti in SQLite.
+    uniqueIndex('workout_sessions_user_client_idx').on(t.userId, t.clientId),
+  ],
+);
+
+// Esercizio svolto: nome/attrezzatura sono uno **snapshot** al momento del log, così la
+// storia resta anche se la voce di catalogo viene eliminata (exercise_id → set null).
+export const sessionExercises = sqliteTable(
+  'session_exercises',
+  {
+    id: text('id').primaryKey(),
+    workoutSessionId: text('workout_session_id')
+      .notNull()
+      .references(() => workoutSessions.id, { onDelete: 'cascade' }),
+    exerciseId: text('exercise_id').references(() => exercises.id, { onDelete: 'set null' }),
+    exerciseName: text('exercise_name').notNull(),
+    equipment: text('equipment', { enum: EQUIPMENT }).notNull().default('other'),
+    sortOrder: integer('sort_order').notNull().default(0),
+  },
+  (t) => [index('session_exercises_session_id_idx').on(t.workoutSessionId)],
+);
+
+// Una serie: peso e reps indipendenti per riga (supporta piramidali/drop set).
+export const sessionSets = sqliteTable(
+  'session_sets',
+  {
+    id: text('id').primaryKey(),
+    sessionExerciseId: text('session_exercise_id')
+      .notNull()
+      .references(() => sessionExercises.id, { onDelete: 'cascade' }),
+    setNumber: integer('set_number').notNull(),
+    weight: real('weight'),
+    reps: integer('reps'),
+    notes: text('notes'),
+    completed: integer('completed', { mode: 'boolean' }).notNull().default(false),
+  },
+  (t) => [index('session_sets_session_exercise_id_idx').on(t.sessionExerciseId)],
+);
+
+export type WorkoutSession = typeof workoutSessions.$inferSelect;
+export type NewWorkoutSession = typeof workoutSessions.$inferInsert;
+export type SessionExercise = typeof sessionExercises.$inferSelect;
+export type NewSessionExercise = typeof sessionExercises.$inferInsert;
+export type SessionSet = typeof sessionSets.$inferSelect;
+export type NewSessionSet = typeof sessionSets.$inferInsert;
+export type WorkoutStatus = WorkoutSession['status'];
