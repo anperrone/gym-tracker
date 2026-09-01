@@ -120,3 +120,98 @@ export const exerciseFiltersSchema = z.object({
   equipment: equipmentSchema.optional(),
 });
 export type ExerciseFilters = z.infer<typeof exerciseFiltersSchema>;
+
+// --- Schede / workout plans (M4) ---
+
+/** Voce di elenco delle schede (con conteggio giorni). */
+export const planSummarySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  isActive: z.boolean(),
+  dayCount: z.number().int(),
+  createdAt: z.string(), // ISO
+  updatedAt: z.string(), // ISO
+});
+export type PlanSummaryDto = z.infer<typeof planSummarySchema>;
+
+/** Esercizio pianificato (lettura), con nome/attrezzatura dal catalogo. */
+export const planExerciseSchema = z.object({
+  id: z.string(),
+  exerciseId: z.string(),
+  exerciseName: z.string(),
+  equipment: equipmentSchema,
+  sortOrder: z.number().int(),
+  targetSets: z.number().int().nullable(),
+  targetReps: z.string().nullable(),
+  targetWeight: z.number().nullable(),
+  restSeconds: z.number().int().nullable(),
+  notes: z.string().nullable(),
+});
+export type PlanExerciseDto = z.infer<typeof planExerciseSchema>;
+
+/** Giorno della scheda con i suoi esercizi. */
+export const planDaySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  sortOrder: z.number().int(),
+  exercises: z.array(planExerciseSchema),
+});
+export type PlanDayDto = z.infer<typeof planDaySchema>;
+
+/** Dettaglio completo di una scheda (giorni + esercizi annidati). */
+export const planDetailSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  isActive: z.boolean(),
+  createdAt: z.string(), // ISO
+  updatedAt: z.string(), // ISO
+  days: z.array(planDaySchema),
+});
+export type PlanDetailDto = z.infer<typeof planDetailSchema>;
+
+export const createPlanSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(1000).nullish(),
+});
+export type CreatePlanInput = z.infer<typeof createPlanSchema>;
+
+export const updatePlanSchema = z.object({
+  name: z.string().trim().min(1).max(120).optional(),
+  description: z.string().trim().max(1000).nullable().optional(),
+  isActive: z.boolean().optional(),
+});
+export type UpdatePlanInput = z.infer<typeof updatePlanSchema>;
+
+export const createPlanDaySchema = z.object({
+  name: z.string().trim().min(1).max(120),
+});
+export type CreatePlanDayInput = z.infer<typeof createPlanDaySchema>;
+
+export const updatePlanDaySchema = z.object({
+  name: z.string().trim().min(1).max(120).optional(),
+  sortOrder: z.number().int().min(0).optional(),
+});
+export type UpdatePlanDayInput = z.infer<typeof updatePlanDaySchema>;
+
+/** Target di un esercizio pianificato (usato in create/update). */
+export const createPlanExerciseSchema = z.object({
+  exerciseId: z.string().min(1),
+  targetSets: z.number().int().min(1).max(50).nullish(),
+  targetReps: z.string().trim().max(40).nullish(),
+  targetWeight: z.number().finite().min(0).max(10000).nullish(),
+  restSeconds: z.number().int().min(0).max(3600).nullish(),
+  notes: z.string().trim().max(500).nullish(),
+});
+export type CreatePlanExerciseInput = z.infer<typeof createPlanExerciseSchema>;
+
+export const updatePlanExerciseSchema = z.object({
+  targetSets: z.number().int().min(1).max(50).nullable().optional(),
+  targetReps: z.string().trim().max(40).nullable().optional(),
+  targetWeight: z.number().finite().min(0).max(10000).nullable().optional(),
+  restSeconds: z.number().int().min(0).max(3600).nullable().optional(),
+  notes: z.string().trim().max(500).nullable().optional(),
+  sortOrder: z.number().int().min(0).optional(),
+});
+export type UpdatePlanExerciseInput = z.infer<typeof updatePlanExerciseSchema>;
