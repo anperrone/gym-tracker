@@ -1,7 +1,7 @@
 # Tasks: Gym Tracker
 
 > Fase 3 del workflow spec-driven. Riferimenti: `SPEC.md` (APPROVED), `PLAN.md` (APPROVED), `SPEC-ui-redesign.md`.
-> Stato: **APPROVED** (2026-09-01) — implementazione in corso. **Ripriorizzato 2026-09-01**: fatti M0/M1/M2/**MU**/**M3**; in corso **M4 (Schede)**, poi M5.
+> Stato: **APPROVED** (2026-09-01) — implementazione in corso. **Ripriorizzato 2026-09-01**: fatti M0/M1/M2/**MU**/**M3**/**M4**; in corso **M5 (Log allenamento)**, poi M6.
 
 Task discreti, ordinati per dipendenza. Ogni task: ≤ ~5 file, criteri di accettazione e passo di verifica espliciti. Dettagliati per **M0** e **M1**; M2–M9 restano a granularità alta e verranno scomposti al loro turno.
 
@@ -217,11 +217,48 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ---
 
-## Allenamenti & resto — da dettagliare al proprio turno
+## M5 — Log allenamento (priorità corrente)
 
-> **Dopo M4.** Granularità alta ora; scomposizione in task al momento dell'implementazione.
+> Avviato 2026-09-01 dopo M4. Branch: `feat/m5-workouts`. Riferimento: `SPEC.md` §5 (Allenamenti svolti). Una sessione ha N esercizi, ogni esercizio N **serie** con **peso e reps indipendenti** (piramidali/drop set). `client_id` per idempotenza (replay/offline). Avvio libero o da un giorno di scheda (pre-popola gli esercizi). Ripresa sessione `in_progress`. Ordine: schema → API sessione → API esercizi/serie → frontend avvio/lista → UI logging → E2E.
 
-- **M5 Log allenamento** — schema `workout_sessions/session_exercises/session_sets`; API upsert idempotente (`client_id`); UI logging peso variabile per serie.
+- [ ] **T5.1 — Schema `workout_sessions`/`session_exercises`/`session_sets` + migrazione + test**
+  - Acceptance: tabelle Drizzle con FK cascade; `workout_sessions` (`plan_day_id` nullable, `status` in_progress/completed, `client_id`, `performed_at`, `duration_seconds`, `notes`); `session_sets` (`weight` real/nullable, `reps` int/nullable, `completed` bool, `set_number`); indici per parent + (`user_id`,`client_id`); migrazione `0004`
+  - Verify: `npm run db:migrate` ok; test insert/cascade + serie a peso variabile; `npm run check` verde
+  - Files: `src/server/db/schema.ts`, `migrations/0004_*.sql`, `tests/db/workouts.test.ts`
+
+- [ ] **T5.2 — API sessione: start idempotente + detail/list/complete/delete + Zod**
+  - Acceptance: `POST /api/sessions` (idempotente per `userId`+`clientId`; opzionale `planDayId` → pre-popola esercizi dal giorno scheda); `GET /api/sessions` (lista, stato); `GET /api/sessions/:id` (dettaglio annidato: esercizi+serie); `PATCH /api/sessions/:id` (status `completed`, note, durata); `DELETE`. Ownership per op; Zod al confine
+  - Verify: test integrazione (anon 401, idempotenza replay `clientId`, pre-popolazione da scheda, isolamento); `npm run check` verde
+  - Files: `src/shared/schemas.ts`, `src/server/db/queries/workouts.ts`, `src/server/routes/sessions.ts`, `src/server/index.ts`, `tests/workouts/api.test.ts`
+
+- [ ] **T5.3 — API esercizi & serie della sessione (nested CRUD)**
+  - Acceptance: `POST/DELETE /api/sessions/:id/exercises[/:seId]` (aggiungi esercizio visibile, rimuovi); `POST/PATCH/DELETE .../exercises/:seId/sets[/:setId]` con `weight`/`reps`/`completed`/`notes` **indipendenti per serie**; ownership della sessione su ogni op; le mutation annidate ritornano il dettaglio aggiornato
+  - Verify: test integrazione (serie a peso variabile 60×12/70×10/80×8, completa serie, isolamento); `npm run check` verde
+  - Files: `src/shared/schemas.ts`, `src/server/db/queries/workouts.ts`, `src/server/routes/sessions.ts`, `tests/workouts/api.test.ts`
+
+- [ ] **T5.4 — Frontend: avvio/lista sessioni + hook + rotta/nav "Allena"**
+  - Acceptance: client API + hook TanStack Query (list/start/detail/complete/delete); `WorkoutPage` (avvia sessione libera o da giorno scheda, riprendi `in_progress`, storico completate); voce nav "Allena" attivata + rotta `/workout`
+  - Verify: test render/hook; `npm run check` verde
+  - Files: `src/client/lib/api.ts`, `src/client/features/workouts/useWorkouts.ts`, `WorkoutPage.tsx`, `src/client/routes/workout.tsx`, `src/client/components/AppShell.tsx`, `src/client/router.tsx`
+
+- [ ] **T5.5 — UI logging sessione (serie a peso variabile) + ripresa**
+  - Acceptance: `WorkoutSessionPage` — aggiungi esercizi via `ExercisePicker`, aggiungi/modifica serie (peso, reps, completata) con ≤ pochi tap, quick-repeat serie; completa sessione; ripresa `in_progress`; stati loading/empty a tema
+  - Verify: test render logging; `npm run check` verde
+  - Files: `src/client/features/workouts/WorkoutSessionPage.tsx`, `SessionExerciseCard.tsx`, `SetRow.tsx`, `useWorkoutSession.ts`, `src/client/router.tsx`
+
+- [ ] **T5.6 — E2E log allenamento**
+  - Acceptance: E2E — avvia sessione, aggiungi esercizio, registra serie a peso variabile (60×12, 70×10, 80×8), completa; ricarica e verifica persistenza + ripresa `in_progress`
+  - Verify: `npm test` + `npm run test:e2e` verdi
+  - Files: `e2e/workouts.spec.ts`
+
+**Checkpoint M5**: log sessione con serie a peso variabile persistito; ripresa `in_progress`; idempotenza `clientId`; isolamento per utente; `npm run check` + E2E verdi. Chiusura via PR verso `main`.
+
+---
+
+## Resto — da dettagliare al proprio turno
+
+> **Dopo M5.** Granularità alta ora; scomposizione in task al momento dell'implementazione.
+
 - **M6 Offline/PWA** — `vite-plugin-pwa` (manifest+SW); Dexie; persistenza TanStack Query; coda mutation offline; sync idempotente + test replay.
 - **M7 Progressi & grafici** — calcoli (1RM Epley, volume, max, PR); endpoint aggregazione; grafici bodyweight + per-esercizio.
 - **M8 Admin** — route role-gated; gestione catalogo globale; gestione utenti/ruoli; test "admin non legge dati personali".
@@ -231,4 +268,4 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ## Prossimo passo
 
-Prossima implementazione: **M4 — Schede**, a partire da **T4.1** (schema plans/days/exercises). Un task alla volta, TDD dove ha senso, `npm run check` verde prima di procedere; chiusura milestone via PR verso `main`. Poi **M5 Log**.
+Prossima implementazione: **M5 — Log allenamento**, a partire da **T5.1** (schema sessioni/esercizi/serie). Un task alla volta, TDD dove ha senso, `npm run check` verde prima di procedere; chiusura milestone via PR verso `main`. Poi **M6 Offline/PWA**.
