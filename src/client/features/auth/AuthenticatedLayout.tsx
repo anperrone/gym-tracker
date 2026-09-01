@@ -8,9 +8,7 @@ export function AuthenticatedLayout() {
 
   if (isLoading) {
     return (
-      <div className="min-h-dvh grid place-items-center bg-slate-50 text-slate-400">
-        Caricamento…
-      </div>
+      <div className="min-h-dvh grid place-items-center bg-bg text-text-muted">Caricamento…</div>
     );
   }
 

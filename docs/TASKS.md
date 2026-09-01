@@ -127,7 +127,7 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
   - Verify: test render primitive; `npm run check` verde
   - Files: `src/client/components/Card.tsx`, `StatTile.tsx`, `IconButton.tsx`, `icons.tsx`, test
 
-- [ ] **TU.4 — Restyle AppShell + Login**
+- [x] **TU.4 — Restyle AppShell + Login**
   - Acceptance: header + bottom-nav ridisegnati con token e icone SVG; stato attivo con accento; `ThemeToggle` nell'header; voci placeholder ancora `disabled` + `aria-label`; Login a tema (bottone Google coerente)
   - Verify: `AppShell.test.tsx` aggiornato passa; `npm run check` verde
   - Files: `src/client/components/AppShell.tsx`, `src/client/features/auth/LoginPage.tsx`, `AppShell.test.tsx`
