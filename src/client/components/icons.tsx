@@ -56,6 +56,14 @@ export function ChartIcon(props: IconProps) {
   );
 }
 
+export function ListIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+    </Icon>
+  );
+}
+
 // --- Azioni ---
 
 export function TrashIcon(props: IconProps) {
@@ -70,6 +78,23 @@ export function PlusIcon(props: IconProps) {
   return (
     <Icon {...props}>
       <path d="M12 5v14M5 12h14" />
+    </Icon>
+  );
+}
+
+export function LinkIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M9 12h6" />
+      <path d="M10 8H8a4 4 0 0 0 0 8h2M14 8h2a4 4 0 0 1 0 8h-2" />
+    </Icon>
+  );
+}
+
+export function CloseIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M18 6 6 18M6 6l12 12" />
     </Icon>
   );
 }

@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
-import { ChartIcon, ClipboardIcon, DumbbellIcon, RulerIcon } from './icons';
+import { ChartIcon, ClipboardIcon, DumbbellIcon, ListIcon, RulerIcon } from './icons';
 import { ThemeToggle } from './ThemeToggle';
 
 type IconComponent = (props: { className?: string }) => ReactNode;
@@ -8,6 +8,7 @@ type NavItem = { key: string; label: string; Icon: IconComponent; to?: string };
 
 const NAV_ITEMS: NavItem[] = [
   { key: 'measurements', label: 'Misure', Icon: RulerIcon, to: '/measurements' },
+  { key: 'exercises', label: 'Esercizi', Icon: ListIcon, to: '/exercises' },
   { key: 'plans', label: 'Schede', Icon: ClipboardIcon },
   { key: 'workout', label: 'Allena', Icon: DumbbellIcon },
   { key: 'progress', label: 'Progressi', Icon: ChartIcon },
@@ -36,7 +37,7 @@ export function AppShell({
 
       <nav
         aria-label="Navigazione principale"
-        className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-4 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
+        className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-5 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
       >
         {NAV_ITEMS.map(({ key, label, Icon, to }) =>
           to ? (

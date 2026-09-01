@@ -1,7 +1,9 @@
 import type { Equipment, ExerciseDto, ExerciseFilters } from '@shared/schemas';
+import { useState } from 'react';
 import { Card } from '@/components/Card';
 import { IconButton } from '@/components/IconButton';
-import { TrashIcon } from '@/components/icons';
+import { LinkIcon, TrashIcon } from '@/components/icons';
+import { LinkCanonicalDialog } from './LinkCanonicalDialog';
 import {
   EQUIPMENT_LABELS,
   EQUIPMENT_OPTIONS,
@@ -23,12 +25,15 @@ function groupByEquipment(rows: ExerciseDto[]): [Equipment, ExerciseDto[]][] {
 export function ExerciseList({ filters }: { filters: ExerciseFilters }) {
   const { data: rows = [], isPending } = useExercises(filters);
   const del = useDeleteExercise();
+  const [linkingId, setLinkingId] = useState<string | null>(null);
 
   if (isPending) return <p className="text-sm text-text-muted">Caricamento…</p>;
   if (rows.length === 0)
     return <p className="text-sm text-text-muted">Nessun esercizio trovato.</p>;
 
   const groups = groupByEquipment(rows);
+  const nameById = new Map(rows.map((r) => [r.id, r.name]));
+  const linking = rows.find((r) => r.id === linkingId) ?? null;
 
   return (
     <div className="space-y-5">
@@ -53,11 +58,21 @@ export function ExerciseList({ filters }: { filters: ExerciseFilters }) {
                     {ex.muscleGroup && (
                       <p className="mt-0.5 truncate text-xs text-text-muted">{ex.muscleGroup}</p>
                     )}
+                    {ex.isCustom && ex.canonicalExerciseId && (
+                      <p className="mt-0.5 truncate text-xs text-accent">
+                        → {nameById.get(ex.canonicalExerciseId) ?? 'voce canonica'}
+                      </p>
+                    )}
                   </div>
                   {ex.isCustom && (
-                    <IconButton label={`Elimina ${ex.name}`} onClick={() => del.mutate(ex.id)}>
-                      <TrashIcon className="h-4 w-4" />
-                    </IconButton>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <IconButton label={`Collega ${ex.name}`} onClick={() => setLinkingId(ex.id)}>
+                        <LinkIcon className="h-4 w-4" />
+                      </IconButton>
+                      <IconButton label={`Elimina ${ex.name}`} onClick={() => del.mutate(ex.id)}>
+                        <TrashIcon className="h-4 w-4" />
+                      </IconButton>
+                    </div>
                   )}
                 </Card>
               </li>
@@ -65,6 +80,16 @@ export function ExerciseList({ filters }: { filters: ExerciseFilters }) {
           </ul>
         </section>
       ))}
+
+      {linking && (
+        <LinkCanonicalDialog
+          exercise={linking}
+          canonicalName={
+            linking.canonicalExerciseId ? (nameById.get(linking.canonicalExerciseId) ?? null) : null
+          }
+          onClose={() => setLinkingId(null)}
+        />
+      )}
     </div>
   );
 }
