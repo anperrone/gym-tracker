@@ -1,7 +1,7 @@
 # Plan tecnico: Gym Tracker
 
-> Fase 2 del workflow spec-driven. Riferimento: `SPEC.md` (APPROVED 2026-09-01).
-> Stato: **APPROVED** (2026-09-01)
+> Fase 2 del workflow spec-driven. Riferimenti: `SPEC.md` (APPROVED 2026-09-01), `SPEC-ui-redesign.md`.
+> Stato: **APPROVED** (2026-09-01) · **Ripriorizzato 2026-09-01**: fatti M0/M1/M2; ora priorità alla **UI (MU)**, poi gli **allenamenti** (M3→M4→M5).
 
 Questo piano definisce **componenti**, **ordine di implementazione**, **rischi**, **cosa si parallelizza** e **checkpoint di verifica**. Dopo l'approvazione si passa alla Fase 3 (Tasks).
 
@@ -38,11 +38,14 @@ Questo piano definisce **componenti**, **ordine di implementazione**, **rischi**
                  └─────────────────────────┘
 ```
 
+> **Ordine di lavorazione (ripriorizzato 2026-09-01)**: M0 ✅ → M1 ✅ → M2 ✅ → **MU (UI Redesign)** → M3 → M4 → M5 (allenamenti) → M6 / M7 / M8 → M9. Le frecce del grafo sono **dipendenze tecniche**, non priorità: MU sfrutta M2 (grafici/misure) e M0/M1 (shell/login).
+
 | Componente | Descrizione | Dipende da |
 |---|---|---|
 | **M0 Foundation** | Scaffold monorepo (client/server/shared), Vite + `@cloudflare/vite-plugin`, Hono, wrangler.jsonc, D1 binding, Drizzle, Biome, Tailwind, Vitest + pool-workers, Playwright skeleton, CI | — |
 | **M1 Auth** | Schema `users`/`sessions`, OAuth Google (`arctic` + PKCE), route login/callback/logout, middleware `requireAuth`, session cookie, contesto auth frontend, allowlist primo admin | M0 |
 | **M2 Misure** | Schema `measurement_types/entries/values`, seed metriche default, API CRUD scoped, form inserimento, storico, grafici | M1 |
+| **MU UI Redesign** | Design system (token tema dark/light + toggle), **fix grafici (asse Y tagliato)**, restyle AppShell/Login/pagina Misure, stat overview. Vedi `SPEC-ui-redesign.md` | M2 + M0/M1 |
 | **M3 Catalogo esercizi** | Schema `exercises`, seed (Appendix A), API list/search/create-custom/link-canonical, distinzione globale/custom | M1 |
 | **M4 Schede** | Schema `workout_plans/plan_days/plan_exercises`, API CRUD, plan builder UI | M3 |
 | **M5 Log allenamento** | Schema `workout_sessions/session_exercises/session_sets`, API upsert idempotente per `client_id`, UI logging con peso variabile per serie | M4 |
@@ -55,11 +58,14 @@ Questo piano definisce **componenti**, **ordine di implementazione**, **rischi**
 
 ## 2. Ordine di implementazione
 
-1. **M0 → M1** in sequenza (fondamenta obbligatorie).
-2. Poi **M2** e **M3** in **parallelo** (indipendenti tra loro).
-3. **M4 → M5** in sequenza dopo M3.
-4. **M6**, **M7**, **M8** dopo M5 (M8 può iniziare già dopo M3).
-5. **M9** in chiusura, con hardening continuo lungo il percorso.
+> **Ripriorizzazione 2026-09-01**: completati **M0, M1, M2**. La prossima priorità è la **UI (MU)**; gli **allenamenti** (M3 → M4 → M5) slittano **dopo** la UI. Le dipendenze tecniche restano invariate (es. M4 dipende da M3): cambia solo l'ordine di lavorazione.
+
+1. ~~**M0 → M1**~~ ✅ fondamenta obbligatorie.
+2. ~~**M2 Misure**~~ ✅.
+3. **MU — UI Redesign** ← *priorità corrente* (design system, fix grafici, restyle). Dipende da M2 (grafici/misure) e M0/M1 (shell/login).
+4. **Allenamenti**: **M3 Catalogo → M4 Schede → M5 Log** in sequenza, dopo MU.
+5. **M6**, **M7**, **M8** dopo M5 (M8 può iniziare già dopo M3; M7 dopo M2+M5).
+6. **M9** in chiusura, con hardening continuo lungo il percorso.
 
 **Principio trasversale**: ogni milestone segue TDD (test prima) su logica di business e autorizzazione, e implementazione incrementale (≤ ~5 file per task).
 
@@ -111,6 +117,7 @@ Ogni milestone è "done" solo se `npm run check` è verde **e** i criteri sotto 
 | **M0** | `npm run dev` avvia Worker+SPA; `npm run build` ok; D1 locale migra; CI verde su repo vuoto |
 | **M1** | Login Google reale in dev crea utente `user`; sessione persistente; `requireAuth` blocca anonimi (test); logout invalida sessione |
 | **M2** | Inserimento misurazione con 9 metriche default → visibile in storico + grafico; utente A non vede dati di B (test) |
+| **MU** | Grafici con **asse Y completo** (nessun clipping a 320/390/desktop); tema dark/light con toggle persistito (default sistema); schermate restyled a contrasto **AA**; `npm run check` + E2E verdi |
 | **M3** | Ricerca/selezione da catalogo seed; creazione esercizio a testo libero; link a voce canonica |
 | **M4** | Creazione scheda con esercizi da catalogo + testo libero; giorni e target serie/reps |
 | **M5** | Log sessione con **serie a peso variabile** (60×12, 70×10, 80×8) persistito; ripresa sessione `in_progress` |
