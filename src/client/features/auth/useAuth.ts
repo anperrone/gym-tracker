@@ -1,8 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
-import { fetchMe, logout } from "@/lib/api";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import { fetchMe, logout } from '@/lib/api';
 
-export const meQueryKey = ["me"] as const;
+export const meQueryKey = ['me'] as const;
 
 export function useAuth() {
   const { data, isPending } = useQuery({
@@ -28,7 +28,7 @@ export function useLogout() {
     onSuccess: async () => {
       queryClient.setQueryData(meQueryKey, null);
       await queryClient.invalidateQueries({ queryKey: meQueryKey });
-      await navigate({ to: "/login" });
+      await navigate({ to: '/login' });
     },
   });
 }

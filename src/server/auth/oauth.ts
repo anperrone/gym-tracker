@@ -1,9 +1,9 @@
-import { randomToken, sha256Base64Url } from "./crypto";
+import { randomToken, sha256Base64Url } from './crypto';
 
 // Endpoint OAuth 2.0 / OpenID Connect di Google.
-const AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
-const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
-const USERINFO_ENDPOINT = "https://openidconnect.googleapis.com/v1/userinfo";
+const AUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth';
+const TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token';
+const USERINFO_ENDPOINT = 'https://openidconnect.googleapis.com/v1/userinfo';
 
 export interface GoogleOAuthConfig {
   clientId: string;
@@ -37,13 +37,13 @@ export async function buildAuthorizationUrl(
   const params = new URLSearchParams({
     client_id: cfg.clientId,
     redirect_uri: cfg.redirectUri,
-    response_type: "code",
-    scope: "openid email profile",
+    response_type: 'code',
+    scope: 'openid email profile',
     state,
     code_challenge: codeChallenge,
-    code_challenge_method: "S256",
-    access_type: "offline",
-    prompt: "select_account",
+    code_challenge_method: 'S256',
+    access_type: 'offline',
+    prompt: 'select_account',
   });
   return `${AUTH_ENDPOINT}?${params.toString()}`;
 }
@@ -55,14 +55,14 @@ export async function exchangeCodeForUser(
   codeVerifier: string,
 ): Promise<GoogleUser> {
   const tokenRes = await fetch(TOKEN_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       client_id: cfg.clientId,
       client_secret: cfg.clientSecret,
       code,
       code_verifier: codeVerifier,
-      grant_type: "authorization_code",
+      grant_type: 'authorization_code',
       redirect_uri: cfg.redirectUri,
     }),
   });

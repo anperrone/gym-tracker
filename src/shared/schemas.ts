@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * Schemi Zod condivisi tra client e server.
@@ -11,7 +11,7 @@ export const healthResponseSchema = z.object({
 });
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
 
-export const userRoleSchema = z.enum(["user", "admin"]);
+export const userRoleSchema = z.enum(['user', 'admin']);
 export type UserRole = z.infer<typeof userRoleSchema>;
 
 /** Profilo dell'utente autenticato (risposta di GET /api/me). */

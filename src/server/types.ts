@@ -1,4 +1,4 @@
-import type { Session, User } from "./db/schema";
+import type { Session, User } from './db/schema';
 
 /**
  * Binding e variabili d'ambiente del Worker.

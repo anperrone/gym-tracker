@@ -1,0 +1,39 @@
+{
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  },
+
+  // Per-linguaggio: blinda contro un defaultFormatter globale (Prettier) nelle user settings
+  "[javascript]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[javascriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[typescriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[json]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[jsonc]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[css]": { "editor.defaultFormatter": "biomejs.biome" },
+
+  // Biome si registra come formatter solo se trova la config nel workspace folder
+  "biome.requireConfiguration": true,
+
+  // Spegni esplicitamente i tool sostituiti, se qualcuno li ha ancora installati
+  "prettier.enable": false,
+  "eslint.enable": false,
+
+  // Coerenza con formatter.lineEnding
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+
+  // Rilassa regole solo in editor (non tocca la CI): utile in debug
+  "biome.inlineConfig": {
+    "linter": {
+      "rules": {
+        "suspicious": { "noConsole": "off" }
+      }
+    }
+  }
+}

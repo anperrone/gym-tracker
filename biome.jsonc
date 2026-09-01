@@ -1,0 +1,149 @@
+{
+  // Schema locale: evita drift schema/CLI quando aggiorni la dipendenza.
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "root": true,
+
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true,
+    "defaultBranch": "main"
+  },
+
+  "files": {
+    // Repo misto (ts/tsx/json/sql/md/...): true = salta i file non gestiti.
+    "ignoreUnknown": true,
+    // "!!" = force-ignore (lo scanner non entra); output e cache di build.
+    "includes": [
+      "**",
+      "!!**/dist",
+      "!!**/.wrangler",
+      "!!**/coverage",
+      "!!**/playwright-report",
+      "!!**/test-results",
+      "!**/*.gen.ts"
+    ]
+  },
+
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "useEditorconfig": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 100,
+    "expand": "auto"
+  },
+
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "preset": "recommended",
+        "organizeImports": "on"
+      }
+    }
+  },
+
+  "linter": {
+    "enabled": true,
+
+    "domains": {
+      "test": "recommended",
+      "project": "recommended"
+    },
+
+    "rules": {
+      "preset": "recommended",
+
+      "correctness": {
+        "noUnusedVariables": "error",
+        "noUnusedImports": "error",
+        "noUnusedFunctionParameters": "error",
+        // Off: usiamo alias tsconfig (@/, @shared/) e import virtuali (cloudflare:test)
+        // che questa regola segnalerebbe come dipendenze non dichiarate.
+        "noUndeclaredDependencies": "off"
+      },
+
+      "suspicious": {
+        "noExplicitAny": "error",
+        "noDebugger": "error",
+        "noDoubleEquals": "error",
+        "noConsole": {
+          "level": "error",
+          "options": { "allow": ["error", "warn"] }
+        }
+      },
+
+      "style": {
+        "useConst": "error",
+        "useImportType": "error",
+        "useExportType": "error",
+        "noParameterAssign": "error",
+        "noNonNullAssertion": "warn",
+        "useNamingConvention": "off"
+      },
+
+      "complexity": {
+        "noForEach": "off",
+        "noExcessiveCognitiveComplexity": {
+          "level": "warn",
+          "options": { "maxAllowedComplexity": 15 }
+        }
+      },
+
+      "performance": {
+        "noBarrelFile": "warn",
+        "noReExportAll": "warn"
+      }
+    }
+  },
+
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all",
+      "arrowParentheses": "always",
+      "bracketSpacing": true
+    },
+    "globals": []
+  },
+
+  "json": {
+    "formatter": { "trailingCommas": "none" }
+  },
+
+  "overrides": [
+    {
+      "includes": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "tests/**", "e2e/**"],
+      "linter": {
+        "rules": {
+          "suspicious": { "noExplicitAny": "off", "noConsole": "off" },
+          "style": { "noNonNullAssertion": "off" },
+          "complexity": { "noExcessiveCognitiveComplexity": "off" }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.config.ts", "**/*.config.js", "scripts/**", "migrations/**"],
+      "linter": {
+        "rules": { "suspicious": { "noConsole": "off" } }
+      }
+    },
+    {
+      // JSON con commenti: settings VS Code e tsconfig
+      "includes": [".vscode/**", "**/tsconfig*.json"],
+      "json": {
+        "parser": { "allowComments": true, "allowTrailingCommas": true }
+      }
+    },
+    {
+      "includes": ["**/*.gen.ts", "src/generated/**"],
+      "linter": { "enabled": false },
+      "formatter": { "lineWidth": 160 }
+    }
+  ]
+}

@@ -1,6 +1,6 @@
-import type { GoogleUser } from "../../auth/oauth";
-import type { Db } from "../client";
-import { type User, users } from "../schema";
+import type { GoogleUser } from '../../auth/oauth';
+import type { Db } from '../client';
+import { type User, users } from '../schema';
 
 /**
  * Crea o aggiorna l'utente a partire dal profilo Google (upsert atomico su google_sub).
@@ -19,7 +19,7 @@ export async function upsertUserFromGoogle(
       email: google.email,
       name: google.name,
       avatarUrl: google.picture,
-      role: isAdmin ? "admin" : "user",
+      role: isAdmin ? 'admin' : 'user',
     })
     .onConflictDoUpdate({
       target: users.googleSub,
@@ -29,7 +29,7 @@ export async function upsertUserFromGoogle(
         avatarUrl: google.picture,
         updatedAt: new Date(),
         // Promuove ad admin se in allowlist; altrimenti non tocca il ruolo esistente.
-        ...(isAdmin ? { role: "admin" as const } : {}),
+        ...(isAdmin ? { role: 'admin' as const } : {}),
       },
     })
     .returning();

@@ -1,27 +1,27 @@
-import { createRootRoute, createRoute, createRouter, Outlet } from "@tanstack/react-router";
-import { AuthenticatedLayout } from "@/features/auth/AuthenticatedLayout";
-import { LoginPage } from "@/features/auth/LoginPage";
-import { HomePage } from "./routes/home";
+import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router';
+import { AuthenticatedLayout } from '@/features/auth/AuthenticatedLayout';
+import { LoginPage } from '@/features/auth/LoginPage';
+import { HomePage } from './routes/home';
 
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
 
 // Rotta pubblica di login.
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/login",
+  path: '/login',
   component: LoginPage,
 });
 
 // Layout protetto: richiede autenticazione, avvolge la shell dell'app.
 const authenticatedRoute = createRoute({
   getParentRoute: () => rootRoute,
-  id: "authenticated",
+  id: 'authenticated',
   component: AuthenticatedLayout,
 });
 
 const indexRoute = createRoute({
   getParentRoute: () => authenticatedRoute,
-  path: "/",
+  path: '/',
   component: HomePage,
 });
 
@@ -29,7 +29,7 @@ const routeTree = rootRoute.addChildren([loginRoute, authenticatedRoute.addChild
 
 export const router = createRouter({ routeTree });
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;
   }

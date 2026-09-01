@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/d1";
-import * as schema from "./schema";
+import { drizzle } from 'drizzle-orm/d1';
+import * as schema from './schema';
 
 /** Crea un'istanza Drizzle legata al binding D1 della richiesta corrente. */
 export function createDb(d1: D1Database) {
