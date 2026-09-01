@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.server.json",
     "lint": "biome lint .",
     "format": "biome format --write .",
-    "validate": "biome check .",
+    "validate": "biome ci .",
     "validate:fix": "biome check --write .",
     "check": "npm run typecheck && npm run validate && npm test -- --run",
     "test": "vitest",
@@ -31,7 +31,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,jsonc,css}": [
-      "biome check --write --no-errors-on-unmatched"
+      "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
     ]
   },
   "overrides": {
@@ -48,7 +48,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.11",
+    "@biomejs/biome": "2.5.11",
     "@cloudflare/vite-plugin": "^1.54.2",
     "@cloudflare/vitest-pool-workers": "^0.22.0",
     "@cloudflare/workers-types": "^5.20260901.1",

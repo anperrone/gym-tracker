@@ -1,4 +1,4 @@
-import { useAuth, useLogout } from "./useAuth";
+import { useAuth, useLogout } from './useAuth';
 
 export function UserMenu() {
   const { user } = useAuth();

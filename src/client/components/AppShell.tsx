@@ -1,10 +1,10 @@
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
 const NAV_ITEMS = [
-  { key: "measurements", label: "Misure", icon: "📏" },
-  { key: "plans", label: "Schede", icon: "📋" },
-  { key: "workout", label: "Allena", icon: "🏋️" },
-  { key: "progress", label: "Progressi", icon: "📈" },
+  { key: 'measurements', label: 'Misure', icon: '📏' },
+  { key: 'plans', label: 'Schede', icon: '📋' },
+  { key: 'workout', label: 'Allena', icon: '🏋️' },
+  { key: 'progress', label: 'Progressi', icon: '📈' },
 ] as const;
 
 export function AppShell({

@@ -1,7 +1,7 @@
-import { Navigate, Outlet } from "@tanstack/react-router";
-import { AppShell } from "@/components/AppShell";
-import { UserMenu } from "./UserMenu";
-import { useAuth } from "./useAuth";
+import { Navigate, Outlet } from '@tanstack/react-router';
+import { AppShell } from '@/components/AppShell';
+import { UserMenu } from './UserMenu';
+import { useAuth } from './useAuth';
 
 export function AuthenticatedLayout() {
   const { isLoading, isAuthenticated } = useAuth();
