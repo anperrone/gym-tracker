@@ -209,3 +209,93 @@ export const updatePlanExerciseSchema = z.object({
   sortOrder: z.number().int().min(0).optional(),
 });
 export type UpdatePlanExerciseInput = z.infer<typeof updatePlanExerciseSchema>;
+
+// --- Allenamenti svolti / log (M5) ---
+
+export const workoutStatusSchema = z.enum(['in_progress', 'completed']);
+export type WorkoutStatus = z.infer<typeof workoutStatusSchema>;
+
+/** Una serie svolta (lettura): peso e reps indipendenti. */
+export const sessionSetSchema = z.object({
+  id: z.string(),
+  setNumber: z.number().int(),
+  weight: z.number().nullable(),
+  reps: z.number().int().nullable(),
+  notes: z.string().nullable(),
+  completed: z.boolean(),
+});
+export type SessionSetDto = z.infer<typeof sessionSetSchema>;
+
+export const sessionExerciseSchema = z.object({
+  id: z.string(),
+  exerciseId: z.string(),
+  exerciseName: z.string(),
+  equipment: equipmentSchema,
+  sortOrder: z.number().int(),
+  sets: z.array(sessionSetSchema),
+});
+export type SessionExerciseDto = z.infer<typeof sessionExerciseSchema>;
+
+/** Dettaglio completo di una sessione (esercizi + serie annidati). */
+export const workoutSessionDetailSchema = z.object({
+  id: z.string(),
+  planDayId: z.string().nullable(),
+  status: workoutStatusSchema,
+  performedAt: z.string(), // ISO
+  durationSeconds: z.number().int().nullable(),
+  notes: z.string().nullable(),
+  exercises: z.array(sessionExerciseSchema),
+});
+export type WorkoutSessionDetailDto = z.infer<typeof workoutSessionDetailSchema>;
+
+/** Voce di elenco delle sessioni. */
+export const workoutSessionSummarySchema = z.object({
+  id: z.string(),
+  status: workoutStatusSchema,
+  performedAt: z.string(), // ISO
+  planDayId: z.string().nullable(),
+  exerciseCount: z.number().int(),
+  setCount: z.number().int(),
+});
+export type WorkoutSessionSummaryDto = z.infer<typeof workoutSessionSummarySchema>;
+
+const isoDate = z
+  .string()
+  .min(1)
+  .refine((v) => !Number.isNaN(Date.parse(v)), { message: 'Data non valida' });
+
+/** Avvio sessione (idempotente per clientId). planDayId opzionale → pre-popola dagli esercizi del giorno. */
+export const startSessionSchema = z.object({
+  clientId: z.string().min(1),
+  planDayId: z.string().min(1).nullish(),
+  performedAt: isoDate.nullish(),
+  notes: z.string().trim().max(1000).nullish(),
+});
+export type StartSessionInput = z.infer<typeof startSessionSchema>;
+
+export const updateSessionSchema = z.object({
+  status: workoutStatusSchema.optional(),
+  notes: z.string().trim().max(1000).nullable().optional(),
+  durationSeconds: z.number().int().min(0).max(86_400).nullable().optional(),
+  performedAt: isoDate.optional(),
+});
+export type UpdateSessionInput = z.infer<typeof updateSessionSchema>;
+
+export const addSessionExerciseSchema = z.object({ exerciseId: z.string().min(1) });
+export type AddSessionExerciseInput = z.infer<typeof addSessionExerciseSchema>;
+
+export const createSetSchema = z.object({
+  weight: z.number().finite().min(0).max(10000).nullish(),
+  reps: z.number().int().min(0).max(1000).nullish(),
+  notes: z.string().trim().max(500).nullish(),
+  completed: z.boolean().optional(),
+});
+export type CreateSetInput = z.infer<typeof createSetSchema>;
+
+export const updateSetSchema = z.object({
+  weight: z.number().finite().min(0).max(10000).nullable().optional(),
+  reps: z.number().int().min(0).max(1000).nullable().optional(),
+  notes: z.string().trim().max(500).nullable().optional(),
+  completed: z.boolean().optional(),
+});
+export type UpdateSetInput = z.infer<typeof updateSetSchema>;
