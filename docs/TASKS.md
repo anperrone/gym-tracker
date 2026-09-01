@@ -217,36 +217,36 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ---
 
-## M5 — Log allenamento (priorità corrente)
+## M5 — Log allenamento ✅ (branch `feat/m5-workouts`)
 
 > Avviato 2026-09-01 dopo M4. Branch: `feat/m5-workouts`. Riferimento: `SPEC.md` §5 (Allenamenti svolti). Una sessione ha N esercizi, ogni esercizio N **serie** con **peso e reps indipendenti** (piramidali/drop set). `client_id` per idempotenza (replay/offline). Avvio libero o da un giorno di scheda (pre-popola gli esercizi). Ripresa sessione `in_progress`. Ordine: schema → API sessione → API esercizi/serie → frontend avvio/lista → UI logging → E2E.
 
-- [ ] **T5.1 — Schema `workout_sessions`/`session_exercises`/`session_sets` + migrazione + test**
+- [x] **T5.1 — Schema `workout_sessions`/`session_exercises`/`session_sets` + migrazione + test**
   - Acceptance: tabelle Drizzle con FK cascade; `workout_sessions` (`plan_day_id` nullable, `status` in_progress/completed, `client_id`, `performed_at`, `duration_seconds`, `notes`); `session_sets` (`weight` real/nullable, `reps` int/nullable, `completed` bool, `set_number`); indici per parent + (`user_id`,`client_id`); migrazione `0004`
   - Verify: `npm run db:migrate` ok; test insert/cascade + serie a peso variabile; `npm run check` verde
   - Files: `src/server/db/schema.ts`, `migrations/0004_*.sql`, `tests/db/workouts.test.ts`
 
-- [ ] **T5.2 — API sessione: start idempotente + detail/list/complete/delete + Zod**
+- [x] **T5.2 — API sessione: start idempotente + detail/list/complete/delete + Zod**
   - Acceptance: `POST /api/sessions` (idempotente per `userId`+`clientId`; opzionale `planDayId` → pre-popola esercizi dal giorno scheda); `GET /api/sessions` (lista, stato); `GET /api/sessions/:id` (dettaglio annidato: esercizi+serie); `PATCH /api/sessions/:id` (status `completed`, note, durata); `DELETE`. Ownership per op; Zod al confine
   - Verify: test integrazione (anon 401, idempotenza replay `clientId`, pre-popolazione da scheda, isolamento); `npm run check` verde
   - Files: `src/shared/schemas.ts`, `src/server/db/queries/workouts.ts`, `src/server/routes/sessions.ts`, `src/server/index.ts`, `tests/workouts/api.test.ts`
 
-- [ ] **T5.3 — API esercizi & serie della sessione (nested CRUD)**
+- [x] **T5.3 — API esercizi & serie della sessione (nested CRUD)**
   - Acceptance: `POST/DELETE /api/sessions/:id/exercises[/:seId]` (aggiungi esercizio visibile, rimuovi); `POST/PATCH/DELETE .../exercises/:seId/sets[/:setId]` con `weight`/`reps`/`completed`/`notes` **indipendenti per serie**; ownership della sessione su ogni op; le mutation annidate ritornano il dettaglio aggiornato
   - Verify: test integrazione (serie a peso variabile 60×12/70×10/80×8, completa serie, isolamento); `npm run check` verde
   - Files: `src/shared/schemas.ts`, `src/server/db/queries/workouts.ts`, `src/server/routes/sessions.ts`, `tests/workouts/api.test.ts`
 
-- [ ] **T5.4 — Frontend: avvio/lista sessioni + hook + rotta/nav "Allena"**
+- [x] **T5.4 — Frontend: avvio/lista sessioni + hook + rotta/nav "Allena"**
   - Acceptance: client API + hook TanStack Query (list/start/detail/complete/delete); `WorkoutPage` (avvia sessione libera o da giorno scheda, riprendi `in_progress`, storico completate); voce nav "Allena" attivata + rotta `/workout`
   - Verify: test render/hook; `npm run check` verde
   - Files: `src/client/lib/api.ts`, `src/client/features/workouts/useWorkouts.ts`, `WorkoutPage.tsx`, `src/client/routes/workout.tsx`, `src/client/components/AppShell.tsx`, `src/client/router.tsx`
 
-- [ ] **T5.5 — UI logging sessione (serie a peso variabile) + ripresa**
+- [x] **T5.5 — UI logging sessione (serie a peso variabile) + ripresa**
   - Acceptance: `WorkoutSessionPage` — aggiungi esercizi via `ExercisePicker`, aggiungi/modifica serie (peso, reps, completata) con ≤ pochi tap, quick-repeat serie; completa sessione; ripresa `in_progress`; stati loading/empty a tema
   - Verify: test render logging; `npm run check` verde
   - Files: `src/client/features/workouts/WorkoutSessionPage.tsx`, `SessionExerciseCard.tsx`, `SetRow.tsx`, `useWorkoutSession.ts`, `src/client/router.tsx`
 
-- [ ] **T5.6 — E2E log allenamento**
+- [x] **T5.6 — E2E log allenamento**
   - Acceptance: E2E — avvia sessione, aggiungi esercizio, registra serie a peso variabile (60×12, 70×10, 80×8), completa; ricarica e verifica persistenza + ripresa `in_progress`
   - Verify: `npm test` + `npm run test:e2e` verdi
   - Files: `e2e/workouts.spec.ts`
