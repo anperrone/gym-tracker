@@ -15,9 +15,9 @@
     {
       "binding": "DB",
       "database_name": "gym-tracker-db",
-      // Placeholder: sostituire con l'id reale da `wrangler d1 create gym-tracker-db`.
+      // Id del database D1 remoto (da `wrangler d1 create gym-tracker-db`).
       // Per lo sviluppo `--local` l'id non deve essere reale.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "6451299f-f2e5-4f83-95bd-e3e631777c40",
       "migrations_dir": "migrations"
     }
   ]
