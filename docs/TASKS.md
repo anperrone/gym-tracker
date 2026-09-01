@@ -64,22 +64,22 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
   - Verify: `npm run db:migrate` ok; test `tabella users` (insert/read + unique) verde; `npm run check` verde (6 test).
   - Files: `src/server/db/schema.ts`, `migrations/0000_absurd_spirit.sql`, `tests/db/users.test.ts`, `tests/apply-migrations.ts`, `vitest.config.ts`
 
-- [ ] **T1.2 — Config OAuth Google (`arctic`) + segreti**
-  - Acceptance: provider Google con PKCE; `GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI` da env; redirect URI dev/prod documentati in README
-  - Verify: typecheck; `.dev.vars.example` aggiornato; nessun segreto nel repo
-  - Files: `src/server/auth/google.ts`, `.dev.vars.example`, `README.md`
+- [x] **T1.2 — Config OAuth Google (Web Crypto, no arctic) + segreti**
+  - Acceptance: OAuth 2.0 + PKCE (S256) implementato con Web Crypto (arctic **rimosso**, deprecato); `GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI` da env; redirect URI dev/prod in README
+  - Verify: typecheck ok; `.dev.vars.example` + README aggiornati; nessun segreto nel repo
+  - Files: `src/server/auth/oauth.ts`, `src/server/auth/crypto.ts`, `src/server/config.ts`, `.dev.vars.example`, `README.md`
 
-- [ ] **T1.3 — Route auth (login / callback / logout)**
+- [x] **T1.3 — Route auth (login / callback / logout)**
   - Acceptance: `GET /auth/google/login` (state+PKCE in cookie, redirect Google); `GET /auth/google/callback` (scambio code, fetch userinfo, upsert `users`, crea sessione, set cookie); `POST /auth/logout` (revoca)
   - Verify: login reale in dev crea utente e sessione; logout invalida
   - Files: `src/server/routes/auth.ts`, `src/server/index.ts`
 
-- [ ] **T1.4 — Modulo sessioni (D1)**
+- [x] **T1.4 — Modulo sessioni (D1)**
   - Acceptance: create/validate/renew (sliding)/revoke; token **hashed** in D1; cookie HttpOnly+Secure+SameSite=Lax
   - Verify: unit test su hashing/scadenza/rinnovo; test revoca
   - Files: `src/server/auth/session.ts`, `tests/auth/session.test.ts`
 
-- [ ] **T1.5 — Middleware `requireAuth` + allowlist admin**
+- [x] **T1.5 — Middleware `requireAuth` + allowlist admin**
   - Acceptance: middleware default-deny che popola `c.get('user')`; email in **allowlist** → ruolo `admin` al primo login
   - Verify: test — anonimo bloccato (401); email allowlist ottiene `admin`
   - Files: `src/server/middleware/auth.ts`, `src/server/config.ts`, `tests/auth/authz.test.ts`

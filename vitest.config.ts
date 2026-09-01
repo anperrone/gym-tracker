@@ -19,7 +19,15 @@ export default defineConfig(async () => {
           plugins: [
             cloudflareTest({
               wrangler: { configPath: "./wrangler.jsonc" },
-              miniflare: { bindings: { TEST_MIGRATIONS: migrations } },
+              miniflare: {
+                bindings: {
+                  TEST_MIGRATIONS: migrations,
+                  GOOGLE_CLIENT_ID: "test-client-id",
+                  GOOGLE_CLIENT_SECRET: "test-client-secret",
+                  GOOGLE_REDIRECT_URI: "http://localhost:5173/auth/google/callback",
+                  ADMIN_EMAILS: "admin@example.com",
+                },
+              },
             }),
           ],
           test: {
