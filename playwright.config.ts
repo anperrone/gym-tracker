@@ -15,7 +15,8 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "npm run dev",
+    // Applica le migrazioni al D1 locale, poi avvia il dev server.
+    command: "npm run db:migrate && npm run dev",
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

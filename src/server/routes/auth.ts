@@ -74,3 +74,20 @@ export const auth = new Hono<AppEnv>()
     clearSessionCookie(c);
     return c.json({ ok: true });
   });
+
+// Seam di test SOLO in dev (per gli E2E): crea una sessione senza passare da Google.
+// In build di produzione `import.meta.env.DEV` è false → la rotta non viene montata.
+if (import.meta.env.DEV) {
+  auth.post("/test-login", async (c) => {
+    const email = c.req.query("email") ?? "e2e@example.com";
+    const db = createDb(c.env.DB);
+    const user = await upsertUserFromGoogle(
+      db,
+      { sub: `e2e-${email}`, email, emailVerified: true, name: "E2E", picture: null },
+      isAdminEmail(c.env, email),
+    );
+    const token = await createSession(db, user.id);
+    setSessionCookie(c, token);
+    return c.json({ ok: true });
+  });
+}

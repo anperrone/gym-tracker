@@ -84,17 +84,17 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
   - Verify: test — anonimo bloccato (401); email allowlist ottiene `admin`
   - Files: `src/server/middleware/auth.ts`, `src/server/config.ts`, `tests/auth/authz.test.ts`
 
-- [ ] **T1.6 — Frontend auth (login + rotte protette)**
+- [x] **T1.6 — Frontend auth (login + rotte protette)**
   - Acceptance: contesto/hook auth; pagina login con bottone Google; `GET /api/me`; wrapper rotte protette che redirige gli anonimi
   - Verify: E2E — flusso login (Google mockato) porta a home autenticata
   - Files: `src/client/features/auth/*`, `src/server/routes/me.ts`, `src/client/routes/`
 
-- [ ] **T1.7 — Test auth (integrazione + E2E)**
+- [x] **T1.7 — Test auth (integrazione + E2E)**
   - Acceptance: integrazione (requireAuth blocca anon; callback crea utente; logout invalida); E2E login con Google mockato
   - Verify: `npm test` + `npm run test:e2e` verdi
   - Files: `tests/auth/*.test.ts`, `e2e/auth.spec.ts`
 
-**Checkpoint M1**: login reale in dev; sessione persistente; `requireAuth` protegge; allowlist admin funziona.
+**Checkpoint M1** ✅: OAuth Google (Web Crypto+PKCE), sessioni D1, `requireAuth` + allowlist admin, frontend login/rotte protette/logout. 15 test unit/integrazione + 3 E2E verdi; build ok. E2E usa un seam dev `/auth/test-login` (gated `import.meta.env.DEV`, **assente in produzione** — verificato). Login reale con Google richiede credenziali OAuth in `.dev.vars`.
 
 ---
 
