@@ -1,7 +1,7 @@
 # Tasks: Gym Tracker
 
 > Fase 3 del workflow spec-driven. Riferimenti: `SPEC.md` (APPROVED), `PLAN.md` (APPROVED), `SPEC-ui-redesign.md`.
-> Stato: **APPROVED** (2026-09-01) — implementazione in corso. **Ripriorizzato 2026-09-01**: fatti M0/M1/M2; prossima priorità **MU (UI)**, poi gli allenamenti (M3→M5).
+> Stato: **APPROVED** (2026-09-01) — implementazione in corso. **Ripriorizzato 2026-09-01**: fatti M0/M1/M2/**MU**; in corso **M3 (Catalogo esercizi)**, poi M4→M5.
 
 Task discreti, ordinati per dipendenza. Ogni task: ≤ ~5 file, criteri di accettazione e passo di verifica espliciti. Dettagliati per **M0** e **M1**; M2–M9 restano a granularità alta e verranno scomposti al loro turno.
 
@@ -146,11 +146,43 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ---
 
+## M3 — Catalogo esercizi (priorità corrente)
+
+> Avviato 2026-09-01 dopo MU. Branch: `feat/m3-exercises`. Riferimento: `SPEC.md` §5 (Esercizi) + Appendix A. Catalogo **globale** (`user_id` NULL, curato dall'admin) + esercizi **custom** per-utente; testo libero collegabile a una voce canonica per unificare la progressione. Ordine interno: schema+seed → API → frontend → picker/nav → test.
+
+- [ ] **T3.1 — Schema `exercises` + migrazione + seed (Appendix A)**
+  - Acceptance: tabella Drizzle `exercises` (`id`, `user_id` NULL=globale, `name`, `muscle_group`, `equipment` enum, `is_custom`, `canonical_exercise_id` self-ref nullable, `created_at`); indici su `user_id` ed `equipment`; migrazione `0002` con seed del catalogo globale (Appendix A, `user_id` NULL)
+  - Verify: `npm run db:migrate` ok; test conteggio catalogo di default per `equipment`; `npm run check` verde
+  - Files: `src/server/db/schema.ts`, `migrations/0002_*.sql`, `tests/db/exercises.test.ts`
+
+- [ ] **T3.2 — API esercizi (list/search/create-custom/link-canonical) + Zod**
+  - Acceptance: `GET /api/exercises` (globali + custom dell'utente, filtro `search`/`equipment`); `POST /api/exercises` (crea custom, testo libero, `canonicalExerciseId` opzionale); `PATCH /api/exercises/:id` (link/unlink canonica, solo custom di proprietà); `DELETE /api/exercises/:id` (solo custom di proprietà). Query scoped per `userId`; Zod al confine
+  - Verify: test integrazione (anon 401, list globali+custom, create, link, isolamento); `npm run check` verde
+  - Files: `src/shared/schemas.ts`, `src/server/db/queries/exercises.ts`, `src/server/routes/exercises.ts`, `src/server/index.ts`, `tests/exercises/api.test.ts`
+
+- [ ] **T3.3 — Frontend: API client + hook + pagina Esercizi**
+  - Acceptance: client API tipizzato + hook TanStack Query (list con filtri, create, delete); `ExercisesPage` con ricerca, filtro per attrezzatura, badge globale/custom, form creazione a testo libero; stati loading/empty a tema
+  - Verify: test render/hook; `npm run check` verde
+  - Files: `src/client/lib/api.ts`, `src/client/features/exercises/useExercises.ts`, `ExercisesPage.tsx`, `ExerciseForm.tsx`, `src/client/routes/exercises.tsx`
+
+- [ ] **T3.4 — ExercisePicker (riusabile) + nav/rotta**
+  - Acceptance: componente `ExercisePicker` (ricerca+selezione dal catalogo, riusabile in M4); voce nav "Schede"→placeholder invariata, nuova voce/rotta Esercizi accessibile; link canonica dalla UI custom
+  - Verify: test render picker (seleziona voce); `AppShell` aggiornato; `npm run check` verde
+  - Files: `src/client/features/exercises/ExercisePicker.tsx`, `LinkCanonicalDialog.tsx`, `src/client/router.tsx`, `src/client/components/AppShell.tsx`
+
+- [ ] **T3.5 — E2E catalogo + isolamento**
+  - Acceptance: E2E — ricerca/selezione dal catalogo seed, creazione esercizio a testo libero, link a voce canonica; verifica isolamento custom tra utenti (già in T3.2, ribadito)
+  - Verify: `npm test` + `npm run test:e2e` verdi
+  - Files: `e2e/exercises.spec.ts`
+
+**Checkpoint M3**: ricerca/selezione da catalogo seed; creazione esercizio a testo libero; link a voce canonica; isolamento custom per utente; `npm run check` + E2E verdi. Chiusura via PR verso `main`.
+
+---
+
 ## Allenamenti & resto — da dettagliare al proprio turno
 
-> **Dopo MU.** Granularità alta ora; scomposizione in task al momento dell'implementazione. Catena allenamenti: **M3 → M4 → M5**.
+> **Dopo M3.** Granularità alta ora; scomposizione in task al momento dell'implementazione. Catena allenamenti: **M4 → M5**.
 
-- **M3 Catalogo esercizi** — schema `exercises` + seed (Appendix A); API list/search/create-custom/link-canonical; picker UI.
 - **M4 Schede** — schema `workout_plans/plan_days/plan_exercises`; API CRUD; plan builder UI.
 - **M5 Log allenamento** — schema `workout_sessions/session_exercises/session_sets`; API upsert idempotente (`client_id`); UI logging peso variabile per serie.
 - **M6 Offline/PWA** — `vite-plugin-pwa` (manifest+SW); Dexie; persistenza TanStack Query; coda mutation offline; sync idempotente + test replay.
@@ -162,4 +194,4 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ## Prossimo passo
 
-Prossima implementazione: **MU — UI Redesign**, a partire da **TU.1** (token di tema) e **TU.2** (fix grafico, bloccante). Un task alla volta, TDD dove ha senso, `npm run check` verde prima di procedere; chiusura milestone via PR verso `main`. Gli **allenamenti** (M3 → M5) seguono a UI completata.
+Prossima implementazione: **M3 — Catalogo esercizi**, a partire da **T3.1** (schema + seed Appendix A). Un task alla volta, TDD dove ha senso, `npm run check` verde prima di procedere; chiusura milestone via PR verso `main`. Poi **M4 Schede → M5 Log**.
