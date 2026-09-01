@@ -13,8 +13,9 @@ test('aggiunge una misurazione e la vede nello storico', async ({ page }) => {
   await page.getByLabel(/^Peso/).fill('66.9');
   await page.getByRole('button', { name: /Salva misurazione/ }).click();
 
-  // Compare nello storico
-  await expect(page.getByText('66.9')).toBeVisible();
+  // Compare nello storico (scoped alla lista: il valore appare anche nell'asse del grafico)
+  const storico = page.getByRole('list', { name: 'Storico misurazioni' });
+  await expect(storico.getByText('66.9')).toBeVisible();
 });
 
 test('la nav "Misure" porta alla pagina misure', async ({ page }) => {
