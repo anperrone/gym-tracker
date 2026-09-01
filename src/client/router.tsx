@@ -1,9 +1,11 @@
 import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router';
 import { AuthenticatedLayout } from '@/features/auth/AuthenticatedLayout';
 import { LoginPage } from '@/features/auth/LoginPage';
+import { PlanDetailPage } from '@/features/plans/PlanDetailPage';
 import { ExercisesPage } from './routes/exercises';
 import { HomePage } from './routes/home';
 import { MeasurementsPage } from './routes/measurements';
+import { PlansPage } from './routes/plans';
 
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
 
@@ -39,9 +41,30 @@ const exercisesRoute = createRoute({
   component: ExercisesPage,
 });
 
+const plansRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/plans',
+  component: PlansPage,
+});
+
+const planDetailRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/plans/$planId',
+  component: function PlanDetailRoute() {
+    const { planId } = planDetailRoute.useParams();
+    return <PlanDetailPage planId={planId} />;
+  },
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
-  authenticatedRoute.addChildren([indexRoute, measurementsRoute, exercisesRoute]),
+  authenticatedRoute.addChildren([
+    indexRoute,
+    measurementsRoute,
+    exercisesRoute,
+    plansRoute,
+    planDetailRoute,
+  ]),
 ]);
 
 export const router = createRouter({ routeTree });

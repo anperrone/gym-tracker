@@ -3,6 +3,7 @@ import { auth } from './routes/auth';
 import { exercises } from './routes/exercises';
 import { me } from './routes/me';
 import { measurements } from './routes/measurements';
+import { plans } from './routes/plans';
 import type { AppEnv } from './types';
 
 const app = new Hono<AppEnv>();
@@ -12,6 +13,7 @@ app.get('/api/health', (c) => c.json({ ok: true }));
 app.route('/api/me', me);
 app.route('/api/measurements', measurements);
 app.route('/api/exercises', exercises);
+app.route('/api/plans', plans);
 
 // OAuth (fuori da /api: redirect di navigazione)
 app.route('/auth', auth);

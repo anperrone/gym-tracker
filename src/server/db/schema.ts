@@ -132,3 +132,63 @@ export const exercises = sqliteTable(
 export type Exercise = typeof exercises.$inferSelect;
 export type NewExercise = typeof exercises.$inferInsert;
 export type Equipment = (typeof EQUIPMENT)[number];
+
+// --- Schede (workout plans) (M4) ---
+
+export const workoutPlans = sqliteTable(
+  'workout_plans',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    description: text('description'),
+    isActive: integer('is_active', { mode: 'boolean' }).notNull().default(false),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [index('workout_plans_user_id_idx').on(t.userId)],
+);
+
+// Un giorno della scheda (es. "Giorno A / Push").
+export const planDays = sqliteTable(
+  'plan_days',
+  {
+    id: text('id').primaryKey(),
+    planId: text('plan_id')
+      .notNull()
+      .references(() => workoutPlans.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    sortOrder: integer('sort_order').notNull().default(0),
+  },
+  (t) => [index('plan_days_plan_id_idx').on(t.planId)],
+);
+
+// Un esercizio pianificato in un giorno, con i target. target_reps è testo (es. "8-12").
+export const planExercises = sqliteTable(
+  'plan_exercises',
+  {
+    id: text('id').primaryKey(),
+    planDayId: text('plan_day_id')
+      .notNull()
+      .references(() => planDays.id, { onDelete: 'cascade' }),
+    exerciseId: text('exercise_id')
+      .notNull()
+      .references(() => exercises.id, { onDelete: 'cascade' }),
+    sortOrder: integer('sort_order').notNull().default(0),
+    targetSets: integer('target_sets'),
+    targetReps: text('target_reps'),
+    targetWeight: real('target_weight'),
+    restSeconds: integer('rest_seconds'),
+    notes: text('notes'),
+  },
+  (t) => [index('plan_exercises_plan_day_id_idx').on(t.planDayId)],
+);
+
+export type WorkoutPlan = typeof workoutPlans.$inferSelect;
+export type NewWorkoutPlan = typeof workoutPlans.$inferInsert;
+export type PlanDay = typeof planDays.$inferSelect;
+export type NewPlanDay = typeof planDays.$inferInsert;
+export type PlanExercise = typeof planExercises.$inferSelect;
+export type NewPlanExercise = typeof planExercises.$inferInsert;
