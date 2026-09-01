@@ -1,0 +1,5 @@
+# Enforce su ogni commit:
+# 1) lint + formatting (Biome) sui soli file staged, con auto-fix e re-stage
+npx lint-staged
+# 2) transpiling / type-check dell'intero progetto
+npm run typecheck
