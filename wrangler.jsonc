@@ -6,7 +6,12 @@
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "binding": "ASSETS",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    // Il Worker gestisce il routing PRIMA degli asset: senza questo, le richieste
+    // di navigazione del browser (Sec-Fetch-Mode: navigate) verso rotte server come
+    // /auth/* verrebbero servite come SPA (index.html) invece di raggiungere Hono.
+    // Le rotte SPA restano gestite dal catch-all `app.all('*') -> ASSETS.fetch`.
+    "run_worker_first": true
   },
   "observability": {
     "enabled": true
