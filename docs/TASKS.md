@@ -1,7 +1,7 @@
 # Tasks: Gym Tracker
 
 > Fase 3 del workflow spec-driven. Riferimenti: `SPEC.md` (APPROVED), `PLAN.md` (APPROVED), `SPEC-ui-redesign.md`.
-> Stato: **APPROVED** (2026-09-01) — implementazione in corso. **Ripriorizzato 2026-09-01**: fatti M0/M1/M2/**MU**/**M3**/**M4**; in corso **M5 (Log allenamento)**, poi M6.
+> Stato: **APPROVED** (2026-09-01) — implementazione in corso. **Ripriorizzato 2026-09-01**: fatti M0/M1/M2/**MU**/**M3**/**M4**/**M5**; in corso **M6 (Offline/PWA)**, poi M7.
 
 Task discreti, ordinati per dipendenza. Ogni task: ≤ ~5 file, criteri di accettazione e passo di verifica espliciti. Dettagliati per **M0** e **M1**; M2–M9 restano a granularità alta e verranno scomposti al loro turno.
 
@@ -255,11 +255,42 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ---
 
+## M6 — Offline/PWA ✅ (branch `feat/m6-offline`)
+
+> Avviato 2026-09-01 dopo M5. Branch: `feat/m6-offline`. Riferimento: `SPEC.md` §3/§4 (offline-first) e criteri: *registrare una serie funziona offline; i dati offline si sincronizzano senza duplicati al ritorno online; app installabile*. **Scelta architetturale**: si usa la **persistenza nativa di TanStack Query su IndexedDB** (letture offline) al posto di un layer Dexie separato — più semplice e idiomatico; l'idempotenza dello start sessione è garantita dal `client_id` (indice UNIQUE, M5). **Scope coda mutation**: le mutation offline vanno in pausa in memoria e si **sincronizzano automaticamente alla riconnessione mentre l'app è aperta** (con optimistic update per il logging serie); non vengono persistite su IndexedDB (dopo un reload non sarebbero rieseguibili senza `mutationFn`) — una coda cross-restart è un'estensione futura. La cache persistita viene **svuotata al logout** (isolamento su dispositivo condiviso).
+
+- [x] **T6.1 — PWA installabile (`vite-plugin-pwa` + manifest + SW)**
+  - Acceptance: `vite-plugin-pwa` (Workbox) con `registerType: autoUpdate`; `manifest.webmanifest` (nome, tema, icone 192/512, `display: standalone`); precache app shell; registrazione SW in `main.tsx`; icone in `public/`
+  - Verify: `npm run build` emette `sw.js` + `manifest.webmanifest`; test unit su presenza manifest/config; `npm run check` verde
+  - Files: `vite.config.ts`, `src/client/main.tsx`, `public/` (icone), `src/client/pwa.ts`, test
+
+- [x] **T6.2 — Persistenza query client su IndexedDB (letture offline)**
+  - Acceptance: `PersistQueryClientProvider` con persister IndexedDB (`idb-keyval`); `gcTime` adeguato; le query già caricate sopravvivono a reload/offline; `resumePausedMutations` al restore
+  - Verify: unit sul persister (round-trip); `npm run check` verde
+  - Files: `src/client/lib/query.tsx`, `src/client/lib/idbPersister.ts`, test
+
+- [x] **T6.3 — Coda mutation offline + optimistic sync (logging)**
+  - Acceptance: le mutation offline vanno in **pausa** e si riprendono automaticamente al ritorno online; **optimistic update** per il logging serie (addSet/updateSet/deleteSet) così l'inserimento offline è immediato; rollback su errore; idempotenza al replay via `client_id`
+  - Verify: unit sull'applicazione optimistic al detail cache; `npm run check` verde
+  - Files: `src/client/features/workouts/useWorkoutSession.ts`, `src/client/lib/optimistic.ts`, test
+
+- [x] **T6.4 — Test idempotenza sync (replay)**
+  - Acceptance: integrazione — replay dello stesso `client_id` (start sessione) e delle mutation non duplica; unit sulla logica di coda/merge
+  - Verify: `npm test` verde
+  - Files: `tests/workouts/sync.test.ts`
+
+- [x] **T6.5 — E2E offline→sync + install**
+  - Acceptance: E2E — `context.setOffline(true)`, registra/aggiorna una serie offline (UI ottimistica), riconnessione → sync automatico senza duplicati; app carica offline dalla cache; manifest/SW presenti
+  - Verify: `npm run test:e2e` verde
+  - Files: `e2e/offline.spec.ts`
+
+**Checkpoint M6**: log offline → riconnessione → sync senza duplicati; app installabile (manifest+SW validi); `npm run check` + E2E verdi. Chiusura via PR verso `main`.
+
+---
+
 ## Resto — da dettagliare al proprio turno
 
-> **Dopo M5.** Granularità alta ora; scomposizione in task al momento dell'implementazione.
-
-- **M6 Offline/PWA** — `vite-plugin-pwa` (manifest+SW); Dexie; persistenza TanStack Query; coda mutation offline; sync idempotente + test replay.
+> **Dopo M6.** Granularità alta ora; scomposizione in task al momento dell'implementazione.
 - **M7 Progressi & grafici** — calcoli (1RM Epley, volume, max, PR); endpoint aggregazione; grafici bodyweight + per-esercizio.
 - **M8 Admin** — route role-gated; gestione catalogo globale; gestione utenti/ruoli; test "admin non legge dati personali".
 - **M9 Hardening & deploy** — rate limit (KV), error handling, a11y, E2E completi, coverage gate, migrazioni prod, deploy, verifica install PWA.
@@ -268,4 +299,4 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ## Prossimo passo
 
-Prossima implementazione: **M5 — Log allenamento**, a partire da **T5.1** (schema sessioni/esercizi/serie). Un task alla volta, TDD dove ha senso, `npm run check` verde prima di procedere; chiusura milestone via PR verso `main`. Poi **M6 Offline/PWA**.
+Prossima implementazione: **M6 — Offline/PWA**, a partire da **T6.1** (PWA installabile). Un task alla volta, `npm run check` verde prima di procedere; chiusura milestone via PR verso `main`. Poi **M7 Progressi & grafici**.

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { fetchMe, logout } from '@/lib/api';
+import { clearOfflineCache } from '@/lib/query';
 
 export const meQueryKey = ['me'] as const;
 
@@ -26,8 +27,10 @@ export function useLogout() {
   return useMutation({
     mutationFn: logout,
     onSuccess: async () => {
+      // Isolamento dati: svuota la cache (anche persistita) per non lasciare dati al
+      // prossimo utente su dispositivo condiviso.
+      await clearOfflineCache();
       queryClient.setQueryData(meQueryKey, null);
-      await queryClient.invalidateQueries({ queryKey: meQueryKey });
       await navigate({ to: '/login' });
     },
   });
