@@ -46,3 +46,30 @@ npm run deploy       # deploy su Cloudflare
 ## Workflow
 
 Feature branch → review (`/agent-skills:review`) prima del push → PR verso `main` (protetto). Vedi `CLAUDE.md`.
+
+## Deploy (Cloudflare via GitHub Actions)
+
+Il workflow `CI` esegue i job `check` ed `e2e` su ogni push/PR; su push a `main`, se **entrambi verdi**, parte il job `deploy` (solo se `DEPLOY_ENABLED=true`). Il deploy applica le migrazioni al D1 remoto, builda, pubblica il Worker e sincronizza i secret.
+
+### Setup una tantum
+
+1. **Crea il database D1** e copia l'`database_id` in `wrangler.jsonc` (campo `d1_databases[0].database_id`):
+   ```bash
+   npx wrangler d1 create gym-tracker-db
+   ```
+2. **Cloudflare API token** — crea un token (template *Edit Cloudflare Workers*, con permessi Workers Scripts:Edit e D1:Edit) e l'**Account ID** (dashboard Cloudflare).
+3. **Google OAuth (produzione)** — crea le credenziali e aggiungi il redirect URI di produzione:
+   `https://gym-tracker.<tuo-subdomain>.workers.dev/auth/google/callback`
+   (il dominio `workers.dev` esiste dopo il primo deploy; puoi fare un primo deploy, leggere l'URL, poi impostare il redirect URI e ridistribuire).
+4. **Imposta i secret e la variabile su GitHub**:
+   ```bash
+   gh secret set CLOUDFLARE_API_TOKEN
+   gh secret set CLOUDFLARE_ACCOUNT_ID
+   gh secret set GOOGLE_CLIENT_ID
+   gh secret set GOOGLE_CLIENT_SECRET
+   gh secret set GOOGLE_REDIRECT_URI
+   gh secret set ADMIN_EMAILS
+   gh variable set DEPLOY_ENABLED --body true   # attiva il job di deploy
+   ```
+
+Da quel momento, ogni merge su `main` con `check` + `e2e` verdi pubblica automaticamente su Cloudflare.
