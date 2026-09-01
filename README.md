@@ -59,6 +59,8 @@ gh secret set ADMIN_EMAILS
 gh variable set DEPLOY_ENABLED --body true   # attiva il job di deploy (fallo per ultimo)
 ```
 
+Per **ruotare** i secret (o in caso di esposizione) vedi `docs/RUNBOOK-secrets.md`.
+
 ---
 
 ## 3. Comandi (test, build, run locale, deploy)
