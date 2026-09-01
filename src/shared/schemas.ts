@@ -71,3 +71,50 @@ export const measurementSeriesPointSchema = z.object({
   value: z.number(),
 });
 export type MeasurementSeriesPoint = z.infer<typeof measurementSeriesPointSchema>;
+
+// --- Catalogo esercizi (M3) ---
+
+export const equipmentSchema = z.enum([
+  'barbell',
+  'dumbbell',
+  'machine',
+  'cable',
+  'bodyweight',
+  'kettlebell',
+  'cardio',
+  'other',
+]);
+export type Equipment = z.infer<typeof equipmentSchema>;
+
+/** Esercizio del catalogo (globale o custom dell'utente). */
+export const exerciseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  muscleGroup: z.string().nullable(),
+  equipment: equipmentSchema,
+  isCustom: z.boolean(),
+  canonicalExerciseId: z.string().nullable(),
+});
+export type ExerciseDto = z.infer<typeof exerciseSchema>;
+
+/** Payload per creare un esercizio custom (testo libero). */
+export const createExerciseSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  equipment: equipmentSchema.default('other'),
+  muscleGroup: z.string().trim().max(120).nullish(),
+  canonicalExerciseId: z.string().min(1).nullish(),
+});
+export type CreateExerciseInput = z.infer<typeof createExerciseSchema>;
+
+/** Payload per collegare/scollegare un custom a una voce canonica. */
+export const updateExerciseSchema = z.object({
+  canonicalExerciseId: z.string().min(1).nullable(),
+});
+export type UpdateExerciseInput = z.infer<typeof updateExerciseSchema>;
+
+/** Query di filtro per l'elenco esercizi. */
+export const exerciseFiltersSchema = z.object({
+  search: z.string().trim().max(120).optional(),
+  equipment: equipmentSchema.optional(),
+});
+export type ExerciseFilters = z.infer<typeof exerciseFiltersSchema>;
