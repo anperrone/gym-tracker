@@ -112,12 +112,12 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 > Ripriorizzato 2026-09-01: la UI ha precedenza sugli allenamenti (M3→M5). Riferimento: `SPEC-ui-redesign.md`. Branch: `feat/ui-modern-redesign`. Ordine interno: token tema → fix grafico (bloccante) → primitive/overview → restyle schermate.
 
-- [ ] **TU.1 — Design tokens & tema (dark/light) + toggle**
+- [x] **TU.1 — Design tokens & tema (dark/light) + toggle**
   - Acceptance: token semantici (bg/surface/border/text/accent/positive/negative/chart-*) definiti **una sola volta** in `index.css` con variante `data-theme`; `useTheme` con default da `prefers-color-scheme`, toggle e persistenza `localStorage`; `ThemeToggle` accessibile
   - Verify: unit `useTheme` (default sistema, toggle, persistenza); `npm run check` verde
   - Files: `src/client/index.css`, `src/client/lib/theme.ts`, `src/client/components/ThemeToggle.tsx`, test
 
-- [ ] **TU.2 — Fix grafico asse Y (bloccante) + arricchimento**
+- [x] **TU.2 — Fix grafico asse Y (bloccante) + arricchimento**
   - Acceptance: `margin.left ≥ 0` e `YAxis width` adeguata → **etichette asse Y mai tagliate** a 320/390/desktop; unità fuori dai tick (`tickFormatter` numerico); area con gradiente accento + ultimo punto evidenziato; tooltip e stati loading/empty a tema; colori da `chartTheme.ts`
   - Verify: unit su `tickFormatter`/dominio; E2E che le tick label dell'asse Y sono presenti e dentro il box (x non negativa); `npm run check` verde
   - Files: `src/client/features/measurements/MeasurementChart.tsx`, `chartTheme.ts`, test, `e2e/measurements-chart.spec.ts`
