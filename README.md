@@ -1,75 +1,93 @@
 # Gym Tracker
 
 App PWA per il tracking di misure corporee e allenamenti.
-Stack: React + Cloudflare Workers (Hono) + D1/Drizzle. Vedi `docs/SPEC.md`, `docs/PLAN.md`, `docs/TASKS.md` e `CLAUDE.md`.
+Stack: React + Cloudflare Workers (Hono) + D1/Drizzle. Requisiti: **Node ≥ 26** (`.nvmrc`).
+Doc: `docs/SPEC.md`, `docs/PLAN.md`, `docs/TASKS.md`, `CLAUDE.md`.
 
-## Requisiti
+---
 
-- Node **≥ 26** (vedi `.nvmrc`)
+## 1. Servizi third-party (obbligatori)
 
-## Setup
+Questi passi si fanno sui provider esterni e sono **prerequisiti** sia per il run locale (Google) sia per il deploy (Cloudflare + Google).
 
-```bash
-npm install
-cp .dev.vars.example .dev.vars   # poi compila i valori reali
-npm run db:migrate               # applica le migrazioni al D1 locale
-npm run dev                      # http://localhost:5173
-```
+### Cloudflare
 
-## Login con Google (OAuth 2.0 + PKCE)
-
-1. Google Cloud Console → **APIs & Services → Credentials → Create OAuth client ID** (tipo *Web application*).
-2. Imposta gli **Authorized redirect URIs**:
-   - Dev: `http://localhost:5173/auth/google/callback`
-   - Prod: `https://<tuo-dominio>/auth/google/callback`
-3. Copia Client ID/Secret in `.dev.vars` (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`).
-4. `ADMIN_EMAILS` = email (separate da virgola) che ricevono il ruolo admin al primo login.
-
-In produzione i segreti vanno impostati come Wrangler secrets:
-
-```bash
-wrangler secret put GOOGLE_CLIENT_ID
-wrangler secret put GOOGLE_CLIENT_SECRET
-```
-
-## Comandi utili
-
-```bash
-npm run check        # typecheck + lint/format (Biome) + test
-npm test             # Vitest (unit + integrazione su workerd/D1)
-npm run test:e2e     # Playwright
-npm run db:generate  # genera migrazione da schema Drizzle
-npm run build        # build di produzione
-npm run deploy       # deploy su Cloudflare
-```
-
-## Workflow
-
-Feature branch → review (`/agent-skills:review`) prima del push → PR verso `main` (protetto). Vedi `CLAUDE.md`.
-
-## Deploy (Cloudflare via GitHub Actions)
-
-Il workflow `CI` esegue i job `check` ed `e2e` su ogni push/PR; su push a `main`, se **entrambi verdi**, parte il job `deploy` (solo se `DEPLOY_ENABLED=true`). Il deploy applica le migrazioni al D1 remoto, builda, pubblica il Worker e sincronizza i secret.
-
-### Setup una tantum
-
-1. **Crea il database D1** e copia l'`database_id` in `wrangler.jsonc` (campo `d1_databases[0].database_id`):
+1. **Crea il database D1** e copia l'`database_id` restituito dentro `wrangler.jsonc` (`d1_databases[0].database_id`):
    ```bash
    npx wrangler d1 create gym-tracker-db
    ```
-2. **Cloudflare API token** — crea un token (template *Edit Cloudflare Workers*, con permessi Workers Scripts:Edit e D1:Edit) e l'**Account ID** (dashboard Cloudflare).
-3. **Google OAuth (produzione)** — crea le credenziali e aggiungi il redirect URI di produzione:
-   `https://gym-tracker.<tuo-subdomain>.workers.dev/auth/google/callback`
-   (il dominio `workers.dev` esiste dopo il primo deploy; puoi fare un primo deploy, leggere l'URL, poi impostare il redirect URI e ridistribuire).
-4. **Imposta i secret e la variabile su GitHub**:
-   ```bash
-   gh secret set CLOUDFLARE_API_TOKEN
-   gh secret set CLOUDFLARE_ACCOUNT_ID
-   gh secret set GOOGLE_CLIENT_ID
-   gh secret set GOOGLE_CLIENT_SECRET
-   gh secret set GOOGLE_REDIRECT_URI
-   gh secret set ADMIN_EMAILS
-   gh variable set DEPLOY_ENABLED --body true   # attiva il job di deploy
-   ```
+2. **API token** — crea un token con template *Edit Cloudflare Workers* (permessi *Workers Scripts:Edit* e *D1:Edit*).
+3. **Account ID** — dalla dashboard Cloudflare (Workers & Pages → Overview).
 
-Da quel momento, ogni merge su `main` con `check` + `e2e` verdi pubblica automaticamente su Cloudflare.
+### Google (OAuth 2.0)
+
+1. Google Cloud Console → **APIs & Services → Credentials → Create OAuth client ID** (tipo *Web application*).
+2. **Authorized redirect URIs**:
+   - Dev: `http://localhost:5173/auth/google/callback`
+   - Prod: `https://gym-tracker.<tuo-subdomain>.workers.dev/auth/google/callback`
+     (il dominio `workers.dev` nasce col **primo deploy**: puoi deployare una prima volta, leggere l'URL reale, poi aggiungere il redirect URI e ridistribuire).
+3. Ottieni **Client ID** e **Client Secret**.
+
+---
+
+## 2. Configurazione dell'applicativo
+
+### Per il run locale — `.dev.vars`
+
+```bash
+npm install
+cp .dev.vars.example .dev.vars     # compila i valori
+npm run db:migrate                 # applica le migrazioni al D1 locale
+```
+
+In `.dev.vars` imposta:
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_REDIRECT_URI=http://localhost:5173/auth/google/callback`
+- `ADMIN_EMAILS` — email (separate da virgola) che ricevono il ruolo admin al primo login
+
+### Per il deploy — GitHub Secrets + variabile
+
+I segreti restano su GitHub e vengono sincronizzati verso Cloudflare dalla pipeline:
+
+```bash
+gh secret set CLOUDFLARE_API_TOKEN
+gh secret set CLOUDFLARE_ACCOUNT_ID
+gh secret set GOOGLE_CLIENT_ID
+gh secret set GOOGLE_CLIENT_SECRET
+gh secret set GOOGLE_REDIRECT_URI       # URL di produzione
+gh secret set ADMIN_EMAILS
+gh variable set DEPLOY_ENABLED --body true   # attiva il job di deploy (fallo per ultimo)
+```
+
+---
+
+## 3. Comandi (test, build, run locale, deploy)
+
+### Test & qualità
+```bash
+npm run check        # typecheck + Biome (lint/format) + test — gate di CI/precommit
+npm test             # Vitest (unit + integrazione su workerd/D1)
+npm run test:e2e     # Playwright (E2E)
+```
+
+### Run locale
+```bash
+npm run dev          # http://localhost:5173
+```
+
+### Build & deploy
+```bash
+npm run build        # build di produzione (Vite → dist/)
+npm run deploy       # build + deploy manuale su Cloudflare (dist/gym_tracker/wrangler.json)
+
+npm run db:generate  # genera una migrazione dallo schema Drizzle
+npm run db:migrate:prod   # applica le migrazioni al D1 remoto
+```
+
+**Deploy automatico (consigliato):** ogni **merge su `main`** avvia i job `check` ed `e2e`; se **entrambi verdi** e `DEPLOY_ENABLED=true`, il job `deploy` applica le migrazioni al D1 remoto → build → pubblica il Worker → sincronizza i secret. Vedi `.github/workflows/ci.yml`.
+
+---
+
+## Workflow di sviluppo
+
+Feature branch → review (`/agent-skills:review`) prima del push → PR verso `main` (protetto: PR obbligatoria, CI verde). Mai commit/push diretti su `main`. Dettagli in `CLAUDE.md`.
