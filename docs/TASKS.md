@@ -122,7 +122,7 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
   - Verify: unit su `tickFormatter`/dominio; E2E che le tick label dell'asse Y sono presenti e dentro il box (x non negativa); `npm run check` verde
   - Files: `src/client/features/measurements/MeasurementChart.tsx`, `chartTheme.ts`, test, `e2e/measurements-chart.spec.ts`
 
-- [ ] **TU.3 — Primitive UI (Card / StatTile / IconButton / icone SVG)**
+- [x] **TU.3 — Primitive UI (Card / StatTile / IconButton / icone SVG)**
   - Acceptance: primitive a tema, `tabular-nums` sui valori; set icone SVG per nav/azioni (sostituisce le emoji); smoke test render
   - Verify: test render primitive; `npm run check` verde
   - Files: `src/client/components/Card.tsx`, `StatTile.tsx`, `IconButton.tsx`, `icons.tsx`, test
