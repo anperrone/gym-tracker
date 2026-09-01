@@ -179,36 +179,36 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ---
 
-## M4 — Schede (workout plans) (priorità corrente)
+## M4 — Schede (workout plans) ✅ (branch `feat/m4-plans`)
 
 > Avviato 2026-09-01 dopo M3. Branch: `feat/m4-plans`. Riferimento: `SPEC.md` §5 (Schede). Una scheda ha N **giorni** (es. "Giorno A / Push"), ogni giorno ha N **esercizi** con target (serie, reps come testo "8-12", peso/rest/note opzionali). Esercizi dal catalogo (globali+custom) via `ExercisePicker` (M3) + testo libero. Tutto scoped per `userId`. Ordine interno: schema → API plans → API giorni/esercizi → frontend lista → plan builder → E2E.
 
-- [ ] **T4.1 — Schema `workout_plans`/`plan_days`/`plan_exercises` + migrazione + test**
+- [x] **T4.1 — Schema `workout_plans`/`plan_days`/`plan_exercises` + migrazione + test**
   - Acceptance: tabelle Drizzle con FK cascade (`plan_days`→`workout_plans`, `plan_exercises`→`plan_days` + `exercises`); indici per parent; `target_reps` text, `target_weight`/`rest_seconds`/`notes` nullable; migrazione `0003`
   - Verify: `npm run db:migrate` ok; test insert/cascade; `npm run check` verde
   - Files: `src/server/db/schema.ts`, `migrations/0003_*.sql`, `tests/db/plans.test.ts`
 
-- [ ] **T4.2 — API schede: CRUD plan + detail + Zod (scoped userId)**
+- [x] **T4.2 — API schede: CRUD plan + detail + Zod (scoped userId)**
   - Acceptance: `GET /api/plans` (lista), `POST /api/plans` (crea), `GET /api/plans/:id` (dettaglio: giorni+esercizi annidati), `PATCH /api/plans/:id` (name/description/isActive), `DELETE /api/plans/:id`. Ownership verificata su ogni op; Zod al confine
   - Verify: test integrazione (anon 401, CRUD, isolamento tra utenti); `npm run check` verde
   - Files: `src/shared/schemas.ts`, `src/server/db/queries/plans.ts`, `src/server/routes/plans.ts`, `src/server/index.ts`, `tests/plans/api.test.ts`
 
-- [ ] **T4.3 — API giorni & esercizi della scheda (nested CRUD + reorder)**
+- [x] **T4.3 — API giorni & esercizi della scheda (nested CRUD + reorder)**
   - Acceptance: `POST/PATCH/DELETE /api/plans/:id/days[/:dayId]`; `POST/PATCH/DELETE .../days/:dayId/exercises[/:peId]` con target (`targetSets`, `targetReps`, `targetWeight?`, `restSeconds?`, `notes?`); `exerciseId` deve essere visibile all'utente (globale o custom proprio); ownership della scheda su ogni op
   - Verify: test integrazione (add/reorder/remove, validazione exerciseId, isolamento); `npm run check` verde
   - Files: `src/shared/schemas.ts`, `src/server/db/queries/plans.ts`, `src/server/routes/plans.ts`, `tests/plans/api.test.ts`
 
-- [ ] **T4.4 — Frontend: lista schede + hook + rotta/nav**
+- [x] **T4.4 — Frontend: lista schede + hook + rotta/nav**
   - Acceptance: client API + hook TanStack Query (list/create/delete plan); `PlansPage` (lista schede con badge attiva, crea/elimina); voce nav "Schede" attivata + rotta `/plans`
   - Verify: test render/hook; `npm run check` verde
   - Files: `src/client/lib/api.ts`, `src/client/features/plans/usePlans.ts`, `PlansPage.tsx`, `src/client/routes/plans.tsx`, `src/client/components/AppShell.tsx`, `src/client/router.tsx`
 
-- [ ] **T4.5 — Plan builder UI (giorni, esercizi via picker + testo libero, target)**
+- [x] **T4.5 — Plan builder UI (giorni, esercizi via picker + testo libero, target)**
   - Acceptance: `PlanDetailPage` — aggiungi/rinomina/elimina giorni; aggiungi esercizi via `ExercisePicker` (+ crea custom a testo libero inline); modifica target (serie/reps/peso/rest/note); rimuovi/riordina; stati loading/empty a tema
   - Verify: test render builder; `npm run check` verde
   - Files: `src/client/features/plans/PlanDetailPage.tsx`, `PlanDayEditor.tsx`, `PlanExerciseRow.tsx`, `usePlanDetail.ts`, `src/client/router.tsx`
 
-- [ ] **T4.6 — E2E scheda**
+- [x] **T4.6 — E2E scheda**
   - Acceptance: E2E — crea scheda, aggiungi giorno, aggiungi esercizio dal catalogo con target serie/reps, verifica persistenza; isolamento tra utenti
   - Verify: `npm test` + `npm run test:e2e` verdi
   - Files: `e2e/plans.spec.ts`
