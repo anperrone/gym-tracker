@@ -9,7 +9,7 @@ type NavItem = { key: string; label: string; Icon: IconComponent; to?: string };
 const NAV_ITEMS: NavItem[] = [
   { key: 'measurements', label: 'Misure', Icon: RulerIcon, to: '/measurements' },
   { key: 'exercises', label: 'Esercizi', Icon: ListIcon, to: '/exercises' },
-  { key: 'plans', label: 'Schede', Icon: ClipboardIcon },
+  { key: 'plans', label: 'Schede', Icon: ClipboardIcon, to: '/plans' },
   { key: 'workout', label: 'Allena', Icon: DumbbellIcon },
   { key: 'progress', label: 'Progressi', Icon: ChartIcon },
 ];

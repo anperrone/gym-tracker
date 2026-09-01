@@ -1,6 +1,9 @@
 import {
   type CreateExerciseInput,
   type CreateMeasurementInput,
+  type CreatePlanDayInput,
+  type CreatePlanExerciseInput,
+  type CreatePlanInput,
   type ExerciseDto,
   type ExerciseFilters,
   exerciseSchema,
@@ -14,7 +17,13 @@ import {
   measurementSeriesPointSchema,
   measurementTypeSchema,
   meResponseSchema,
+  type PlanDetailDto,
+  type PlanSummaryDto,
+  planDetailSchema,
+  planSummarySchema,
   type UpdateExerciseInput,
+  type UpdatePlanExerciseInput,
+  type UpdatePlanInput,
 } from '@shared/schemas';
 import { type ZodType, z } from 'zod';
 
@@ -130,4 +139,93 @@ export async function deleteExercise(id: string): Promise<void> {
   if (!res.ok) {
     throw new ApiError(res.status, 'Eliminazione fallita');
   }
+}
+
+// --- Schede ---
+
+/** POST/PATCH/DELETE tipizzato con validazione della risposta. */
+async function sendJson<T>(
+  path: string,
+  method: 'POST' | 'PATCH' | 'DELETE',
+  schema: ZodType<T>,
+  body?: unknown,
+): Promise<T> {
+  const res = await fetch(path, {
+    method,
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+  });
+  if (!res.ok) {
+    throw new ApiError(res.status, `Richiesta fallita: ${res.status}`);
+  }
+  return schema.parse(await res.json());
+}
+
+export function fetchPlans(): Promise<PlanSummaryDto[]> {
+  return getJson('/api/plans', z.array(planSummarySchema));
+}
+
+export function fetchPlanDetail(id: string): Promise<PlanDetailDto> {
+  return getJson(`/api/plans/${id}`, planDetailSchema);
+}
+
+export function createPlan(input: CreatePlanInput): Promise<PlanSummaryDto> {
+  return sendJson('/api/plans', 'POST', planSummarySchema, input);
+}
+
+export function updatePlan(id: string, input: UpdatePlanInput): Promise<PlanSummaryDto> {
+  return sendJson(`/api/plans/${id}`, 'PATCH', planSummarySchema, input);
+}
+
+export async function deletePlan(id: string): Promise<void> {
+  const res = await fetch(`/api/plans/${id}`, { method: 'DELETE' });
+  if (!res.ok) {
+    throw new ApiError(res.status, 'Eliminazione fallita');
+  }
+}
+
+export function addPlanDay(planId: string, input: CreatePlanDayInput): Promise<PlanDetailDto> {
+  return sendJson(`/api/plans/${planId}/days`, 'POST', planDetailSchema, input);
+}
+
+export function renamePlanDay(planId: string, dayId: string, name: string): Promise<PlanDetailDto> {
+  return sendJson(`/api/plans/${planId}/days/${dayId}`, 'PATCH', planDetailSchema, { name });
+}
+
+export function deletePlanDay(planId: string, dayId: string): Promise<PlanDetailDto> {
+  return sendJson(`/api/plans/${planId}/days/${dayId}`, 'DELETE', planDetailSchema);
+}
+
+export function addPlanExercise(
+  planId: string,
+  dayId: string,
+  input: CreatePlanExerciseInput,
+): Promise<PlanDetailDto> {
+  return sendJson(`/api/plans/${planId}/days/${dayId}/exercises`, 'POST', planDetailSchema, input);
+}
+
+export function updatePlanExercise(
+  planId: string,
+  dayId: string,
+  peId: string,
+  input: UpdatePlanExerciseInput,
+): Promise<PlanDetailDto> {
+  return sendJson(
+    `/api/plans/${planId}/days/${dayId}/exercises/${peId}`,
+    'PATCH',
+    planDetailSchema,
+    input,
+  );
+}
+
+export function deletePlanExercise(
+  planId: string,
+  dayId: string,
+  peId: string,
+): Promise<PlanDetailDto> {
+  return sendJson(
+    `/api/plans/${planId}/days/${dayId}/exercises/${peId}`,
+    'DELETE',
+    planDetailSchema,
+  );
 }
