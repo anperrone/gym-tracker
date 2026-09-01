@@ -20,8 +20,12 @@ import {
   meResponseSchema,
   type PlanDetailDto,
   type PlanSummaryDto,
+  type ProgressExerciseDto,
+  type ProgressPointDto,
   planDetailSchema,
   planSummarySchema,
+  progressExerciseSchema,
+  progressPointSchema,
   type StartSessionInput,
   type UpdateExerciseInput,
   type UpdatePlanExerciseInput,
@@ -311,5 +315,18 @@ export function deleteSet(
     `/api/sessions/${id}/exercises/${seId}/sets/${setId}`,
     'DELETE',
     workoutSessionDetailSchema,
+  );
+}
+
+// --- Progressi ---
+
+export function fetchProgressExercises(): Promise<ProgressExerciseDto[]> {
+  return getJson('/api/progress/exercises', z.array(progressExerciseSchema));
+}
+
+export function fetchExerciseProgress(exerciseId: string): Promise<ProgressPointDto[]> {
+  return getJson(
+    `/api/progress/exercises/${encodeURIComponent(exerciseId)}`,
+    z.array(progressPointSchema),
   );
 }

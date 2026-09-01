@@ -7,6 +7,7 @@ import { ExercisesPage } from './routes/exercises';
 import { HomePage } from './routes/home';
 import { MeasurementsPage } from './routes/measurements';
 import { PlansPage } from './routes/plans';
+import { ProgressPage } from './routes/progress';
 import { WorkoutPage } from './routes/workout';
 
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
@@ -73,6 +74,12 @@ const workoutSessionRoute = createRoute({
   },
 });
 
+const progressRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/progress',
+  component: ProgressPage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   authenticatedRoute.addChildren([
@@ -83,6 +90,7 @@ const routeTree = rootRoute.addChildren([
     planDetailRoute,
     workoutRoute,
     workoutSessionRoute,
+    progressRoute,
   ]),
 ]);
 

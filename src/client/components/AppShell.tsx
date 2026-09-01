@@ -11,7 +11,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'exercises', label: 'Esercizi', Icon: ListIcon, to: '/exercises' },
   { key: 'plans', label: 'Schede', Icon: ClipboardIcon, to: '/plans' },
   { key: 'workout', label: 'Allena', Icon: DumbbellIcon, to: '/workout' },
-  { key: 'progress', label: 'Progressi', Icon: ChartIcon },
+  { key: 'progress', label: 'Progressi', Icon: ChartIcon, to: '/progress' },
 ];
 
 const itemBase = 'flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs';

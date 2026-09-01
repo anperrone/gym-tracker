@@ -300,3 +300,25 @@ export const updateSetSchema = z.object({
   completed: z.boolean().optional(),
 });
 export type UpdateSetInput = z.infer<typeof updateSetSchema>;
+
+// --- Progressi (M7) ---
+
+/** Esercizio con dati loggati (voce dell'elenco progressi). */
+export const progressExerciseSchema = z.object({
+  exerciseId: z.string(),
+  exerciseName: z.string(),
+  sessionCount: z.number().int(),
+  bestWeight: z.number(),
+  best1RM: z.number(),
+  lastPerformedAt: z.string(), // ISO
+});
+export type ProgressExerciseDto = z.infer<typeof progressExerciseSchema>;
+
+/** Punto della progressione di un esercizio (aggregato per sessione). */
+export const progressPointSchema = z.object({
+  date: z.string(), // ISO (performed_at della sessione)
+  topWeight: z.number(),
+  volume: z.number(),
+  best1RM: z.number(),
+});
+export type ProgressPointDto = z.infer<typeof progressPointSchema>;
