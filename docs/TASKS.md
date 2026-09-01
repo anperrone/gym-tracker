@@ -146,31 +146,31 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ---
 
-## M3 — Catalogo esercizi (priorità corrente)
+## M3 — Catalogo esercizi ✅ (branch `feat/m3-exercises`)
 
 > Avviato 2026-09-01 dopo MU. Branch: `feat/m3-exercises`. Riferimento: `SPEC.md` §5 (Esercizi) + Appendix A. Catalogo **globale** (`user_id` NULL, curato dall'admin) + esercizi **custom** per-utente; testo libero collegabile a una voce canonica per unificare la progressione. Ordine interno: schema+seed → API → frontend → picker/nav → test.
 
-- [ ] **T3.1 — Schema `exercises` + migrazione + seed (Appendix A)**
+- [x] **T3.1 — Schema `exercises` + migrazione + seed (Appendix A)**
   - Acceptance: tabella Drizzle `exercises` (`id`, `user_id` NULL=globale, `name`, `muscle_group`, `equipment` enum, `is_custom`, `canonical_exercise_id` self-ref nullable, `created_at`); indici su `user_id` ed `equipment`; migrazione `0002` con seed del catalogo globale (Appendix A, `user_id` NULL)
   - Verify: `npm run db:migrate` ok; test conteggio catalogo di default per `equipment`; `npm run check` verde
   - Files: `src/server/db/schema.ts`, `migrations/0002_*.sql`, `tests/db/exercises.test.ts`
 
-- [ ] **T3.2 — API esercizi (list/search/create-custom/link-canonical) + Zod**
+- [x] **T3.2 — API esercizi (list/search/create-custom/link-canonical) + Zod**
   - Acceptance: `GET /api/exercises` (globali + custom dell'utente, filtro `search`/`equipment`); `POST /api/exercises` (crea custom, testo libero, `canonicalExerciseId` opzionale); `PATCH /api/exercises/:id` (link/unlink canonica, solo custom di proprietà); `DELETE /api/exercises/:id` (solo custom di proprietà). Query scoped per `userId`; Zod al confine
   - Verify: test integrazione (anon 401, list globali+custom, create, link, isolamento); `npm run check` verde
   - Files: `src/shared/schemas.ts`, `src/server/db/queries/exercises.ts`, `src/server/routes/exercises.ts`, `src/server/index.ts`, `tests/exercises/api.test.ts`
 
-- [ ] **T3.3 — Frontend: API client + hook + pagina Esercizi**
+- [x] **T3.3 — Frontend: API client + hook + pagina Esercizi**
   - Acceptance: client API tipizzato + hook TanStack Query (list con filtri, create, delete); `ExercisesPage` con ricerca, filtro per attrezzatura, badge globale/custom, form creazione a testo libero; stati loading/empty a tema
   - Verify: test render/hook; `npm run check` verde
   - Files: `src/client/lib/api.ts`, `src/client/features/exercises/useExercises.ts`, `ExercisesPage.tsx`, `ExerciseForm.tsx`, `src/client/routes/exercises.tsx`
 
-- [ ] **T3.4 — ExercisePicker (riusabile) + nav/rotta**
+- [x] **T3.4 — ExercisePicker (riusabile) + nav/rotta**
   - Acceptance: componente `ExercisePicker` (ricerca+selezione dal catalogo, riusabile in M4); voce nav "Schede"→placeholder invariata, nuova voce/rotta Esercizi accessibile; link canonica dalla UI custom
   - Verify: test render picker (seleziona voce); `AppShell` aggiornato; `npm run check` verde
   - Files: `src/client/features/exercises/ExercisePicker.tsx`, `LinkCanonicalDialog.tsx`, `src/client/router.tsx`, `src/client/components/AppShell.tsx`
 
-- [ ] **T3.5 — E2E catalogo + isolamento**
+- [x] **T3.5 — E2E catalogo + isolamento**
   - Acceptance: E2E — ricerca/selezione dal catalogo seed, creazione esercizio a testo libero, link a voce canonica; verifica isolamento custom tra utenti (già in T3.2, ribadito)
   - Verify: `npm test` + `npm run test:e2e` verdi
   - Files: `e2e/exercises.spec.ts`
