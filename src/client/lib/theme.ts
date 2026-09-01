@@ -40,13 +40,6 @@ export function applyTheme(theme: Theme): void {
   root.style.colorScheme = theme;
 }
 
-/** Risolve e applica il tema il prima possibile (chiamato in `main` prima del render). */
-export function initTheme(): Theme {
-  const theme = resolveInitialTheme();
-  applyTheme(theme);
-  return theme;
-}
-
 /** Hook di tema: stato corrente + toggle, con persistenza e sincronizzazione col DOM. */
 export function useTheme(): { theme: Theme; toggle: () => void; setTheme: (next: Theme) => void } {
   const [theme, setThemeState] = useState<Theme>(() => {
@@ -57,6 +50,17 @@ export function useTheme(): { theme: Theme; toggle: () => void; setTheme: (next:
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
+
+  // Segue il tema di sistema finché l'utente non ha una preferenza salvata.
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mql = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = (e: MediaQueryListEvent) => {
+      if (getStoredTheme() === null) setThemeState(e.matches ? 'dark' : 'light');
+    };
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
 
   const setTheme = useCallback((next: Theme) => {
     try {
@@ -80,4 +84,28 @@ export function useTheme(): { theme: Theme; toggle: () => void; setTheme: (next:
   }, []);
 
   return { theme, toggle, setTheme };
+}
+
+/**
+ * Osserva l'attributo `data-theme` sul `<html>` e ritorna il tema corrente. Serve ai
+ * componenti che risolvono colori dai token via JS (es. i grafici Recharts, che ricevono
+ * stringhe-colore literali) e devono ricalcolarli quando il tema cambia.
+ */
+export function useThemeAttribute(): Theme {
+  const [theme, setTheme] = useState<Theme>(() => {
+    const current = document.documentElement.dataset.theme;
+    return isTheme(current) ? current : 'light';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const observer = new MutationObserver(() => {
+      const current = root.dataset.theme;
+      setTheme(isTheme(current) ? current : 'light');
+    });
+    observer.observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
+
+  return theme;
 }

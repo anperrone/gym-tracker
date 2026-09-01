@@ -4,9 +4,9 @@ import { useMeasurements, useMeasurementTypes } from './useMeasurements';
 
 export function StatOverview() {
   const { data: entries = [], isPending } = useMeasurements();
-  const { data: types = [] } = useMeasurementTypes();
+  const { data: types = [], isPending: typesPending } = useMeasurementTypes();
 
-  if (isPending) {
+  if (isPending || typesPending) {
     return (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {[0, 1, 2].map((i) => (

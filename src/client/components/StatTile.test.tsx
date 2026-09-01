@@ -6,7 +6,7 @@ describe('<StatTile />', () => {
   it('mostra etichetta, valore e unità', () => {
     render(<StatTile label="Peso" value={72.4} unit="kg" />);
     expect(screen.getByText('Peso')).toBeInTheDocument();
-    expect(screen.getByText('72,4')).toBeInTheDocument();
+    expect(screen.getByText('72.4')).toBeInTheDocument();
     expect(screen.getByText('kg')).toBeInTheDocument();
   });
 
@@ -19,7 +19,7 @@ describe('<StatTile />', () => {
     render(<StatTile label="Peso" value={70} unit="kg" delta={-2.5} />);
     // direzione verso il basso + variazione assoluta
     expect(screen.getByText('▼')).toBeInTheDocument();
-    expect(screen.getByText('2,5 kg')).toBeInTheDocument();
+    expect(screen.getByText('2.5 kg')).toBeInTheDocument();
   });
 
   it('non mostra il delta quando è zero o assente', () => {

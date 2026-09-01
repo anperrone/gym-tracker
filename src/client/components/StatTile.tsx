@@ -1,3 +1,5 @@
+import { Card } from './Card';
+
 type StatTileProps = {
   label: string;
   value: number | null;
@@ -7,11 +9,10 @@ type StatTileProps = {
   precision?: number;
 };
 
+// Formato numerico coerente col resto della pagina (separatore punto), senza zeri inutili.
 function formatNumber(value: number, precision: number): string {
-  return new Intl.NumberFormat('it-IT', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: precision,
-  }).format(value);
+  const factor = 10 ** precision;
+  return (Math.round(value * factor) / factor).toString();
 }
 
 /** Tile di sintesi: etichetta + valore grande + unità + delta neutro vs misura precedente. */
@@ -21,7 +22,7 @@ export function StatTile({ label, value, unit, delta, precision = 1 }: StatTileP
   const deltaUp = (delta ?? 0) > 0;
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-3">
+    <Card className="p-3">
       <p className="text-xs font-medium text-text-muted">{label}</p>
       <p className="mt-1 flex items-baseline gap-1">
         <span className="text-2xl font-semibold text-text tabular-nums">
@@ -38,6 +39,6 @@ export function StatTile({ label, value, unit, delta, precision = 1 }: StatTileP
           </span>
         </p>
       ) : null}
-    </div>
+    </Card>
   );
 }

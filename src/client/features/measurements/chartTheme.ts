@@ -1,6 +1,5 @@
 export type ChartColors = {
   line: string;
-  area: string;
   grid: string;
   axis: string;
   dotStroke: string;
@@ -11,10 +10,9 @@ export type ChartColors = {
 
 // Fallback usati quando i token CSS non sono risolvibili (SSR / jsdom / no-CSS).
 const FALLBACK: ChartColors = {
-  line: '#059669',
-  area: 'rgba(5, 150, 105, 0.2)',
+  line: '#047857',
   grid: '#e5e8ec',
-  axis: '#64748b',
+  axis: '#5b6673',
   dotStroke: '#ffffff',
   tooltipBg: '#ffffff',
   tooltipBorder: '#e5e8ec',
@@ -34,7 +32,6 @@ export function getChartColors(): ChartColors {
   const s = window.getComputedStyle(document.documentElement);
   return {
     line: cssVar(s, '--chart-line', FALLBACK.line),
-    area: cssVar(s, '--chart-area', FALLBACK.area),
     grid: cssVar(s, '--chart-grid', FALLBACK.grid),
     axis: cssVar(s, '--text-muted', FALLBACK.axis),
     dotStroke: cssVar(s, '--surface', FALLBACK.dotStroke),

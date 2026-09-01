@@ -1,8 +1,5 @@
 @import "tailwindcss";
 
-/* Variante `dark:` guidata da data-theme sul <html> (impostato da theme.ts / script anti-FOUC). */
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
-
 /* --- Design tokens: unica fonte di verità dei colori (tema chiaro di default) --- */
 :root {
   --bg: #f6f7f9;
@@ -18,7 +15,6 @@
 
   /* Grafici (letti da chartTheme.ts) */
   --chart-line: var(--accent);
-  --chart-area: color-mix(in oklab, var(--accent) 20%, transparent);
   --chart-grid: var(--border);
 
   color-scheme: light;
@@ -36,8 +32,6 @@
   --accent-fg: #07130d;
   --positive: #34d399;
   --negative: #f87171;
-
-  --chart-area: color-mix(in oklab, var(--accent) 26%, transparent);
 
   color-scheme: dark;
 }

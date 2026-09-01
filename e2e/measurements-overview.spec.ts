@@ -23,8 +23,11 @@ test('la sintesi mostra ultimo valore e delta vs misura precedente', async ({ pa
 
   await page.goto('/measurements');
 
-  // Valore più recente e delta (formato it-IT con virgola: appare solo nella StatTile).
-  await expect(page.getByText('72,5')).toBeVisible();
-  await expect(page.getByText('▲')).toBeVisible();
-  await expect(page.getByText('2,5 kg')).toBeVisible();
+  // Valore più recente e delta nella Sintesi (scoped: lo storico mostra anch'esso 72.5).
+  const sintesi = page
+    .locator('section')
+    .filter({ has: page.getByRole('heading', { name: 'Sintesi' }) });
+  await expect(sintesi.getByText('72.5')).toBeVisible();
+  await expect(sintesi.getByText('▲')).toBeVisible();
+  await expect(sintesi.getByText('2.5 kg')).toBeVisible();
 });

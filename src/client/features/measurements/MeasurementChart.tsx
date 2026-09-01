@@ -8,6 +8,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useThemeAttribute } from '@/lib/theme';
 import { computeYDomain, formatAxisValue, getChartColors } from './chartTheme';
 import { useMeasurementSeries } from './useMeasurements';
 
@@ -17,6 +18,8 @@ function shortDate(iso: string): string {
 
 export function MeasurementChart({ typeId, unit }: { typeId: string; unit: string }) {
   const { data = [], isPending } = useMeasurementSeries(typeId);
+  // Ri-renderizza al cambio tema, così i colori risolti dai token CSS restano aggiornati.
+  useThemeAttribute();
 
   if (isPending) return <div className="h-56 animate-pulse rounded-xl bg-surface-2" />;
   if (data.length === 0)
