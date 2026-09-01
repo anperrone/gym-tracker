@@ -53,14 +53,16 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 **Checkpoint M0**: `npm run dev`/`build` ok, D1 migra, `npm run check` verde, E2E smoke verde, pre-commit hook attivo.
 
+**Delivery M0**: repo **pubblico** `anperrone/gym-tracker`; consegnato via PR #1 (squash) → `main`. CI verde (`check` + `e2e` + GitGuardian). Hardening: **ruleset attivo** su `main` (PR obbligatoria, check `check`/`e2e` richiesti, no force-push/delete, linear history) + merge solo squash/rebase + auto-delete branch + Dependabot; hook `pre-push` blocca push su `main`.
+
 ---
 
 ## M1 — Auth (Google OAuth + sessioni)
 
-- [ ] **T1.1 — Schema `users` + `sessions`**
-  - Acceptance: tabelle Drizzle `users` (con `google_sub` unique, `role`) e `sessions` (token hashed, `expires_at`); migrazione applicata
-  - Verify: `npm run db:migrate` ok; test che inserisce/legge un utente
-  - Files: `src/server/db/schema.ts`, `migrations/*`, `tests/db/users.test.ts`
+- [x] **T1.1 — Schema `users` + `sessions`**
+  - Acceptance: tabelle Drizzle `users` (con `google_sub` unique, `role` user/admin) e `sessions` (id = hash token, `expires_at`, FK cascade); migrazione `0000_absurd_spirit.sql` generata e applicata. Infra test: migrazioni auto-applicate al D1 pool-workers.
+  - Verify: `npm run db:migrate` ok; test `tabella users` (insert/read + unique) verde; `npm run check` verde (6 test).
+  - Files: `src/server/db/schema.ts`, `migrations/0000_absurd_spirit.sql`, `tests/db/users.test.ts`, `tests/apply-migrations.ts`, `vitest.config.ts`
 
 - [ ] **T1.2 — Config OAuth Google (`arctic`) + segreti**
   - Acceptance: provider Google con PKCE; `GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI` da env; redirect URI dev/prod documentati in README
