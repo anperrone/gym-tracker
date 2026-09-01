@@ -42,7 +42,7 @@ export default defineConfig(async () => {
           resolve: { alias: clientAlias },
           test: {
             name: 'client',
-            include: ['src/client/**/*.test.{ts,tsx}'],
+            include: ['src/client/**/*.test.{ts,tsx}', 'src/shared/**/*.test.ts'],
             environment: 'jsdom',
             globals: true,
             setupFiles: ['./tests/setup.client.ts'],
