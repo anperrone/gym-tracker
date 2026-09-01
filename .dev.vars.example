@@ -1,0 +1,16 @@
+# Copia in `.dev.vars` (git-ignored) e compila con valori reali per lo sviluppo locale.
+# In produzione questi vanno impostati come Wrangler secrets:
+#   wrangler secret put GOOGLE_CLIENT_ID
+#   wrangler secret put GOOGLE_CLIENT_SECRET
+
+# Google OAuth (Google Cloud Console → Credentials → OAuth 2.0 Client ID, tipo "Web application")
+GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="your-client-secret"
+# Deve combaciare con un "Authorized redirect URI" in Google Cloud Console.
+# Dev:  http://localhost:5173/auth/google/callback
+# Prod: https://<tuo-dominio>/auth/google/callback
+GOOGLE_REDIRECT_URI="http://localhost:5173/auth/google/callback"
+
+# Email (separate da virgola) che ricevono il ruolo `admin` al primo login.
+# In `.dev.vars` (git-ignored) inserisci la tua email reale.
+ADMIN_EMAILS="admin@example.com"

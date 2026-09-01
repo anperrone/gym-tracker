@@ -1,0 +1,10 @@
+# Blocca i push diretti su main: il lavoro passa sempre da feature branch + PR.
+# (Enforcement lato client; sul server la protezione richiede repo pubblico o GitHub Pro/Team.)
+protected="main"
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+  if [ "$remote_ref" = "refs/heads/$protected" ]; then
+    echo "✖ Push diretto su '$protected' bloccato. Usa un feature branch + PR." >&2
+    exit 1
+  fi
+done
+exit 0
