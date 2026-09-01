@@ -1,3 +1,5 @@
+import type { Session, User } from "./db/schema";
+
 /**
  * Binding e variabili d'ambiente del Worker.
  * I secret (GOOGLE_*, ADMIN_EMAILS) arrivano da `.dev.vars` in locale
@@ -12,4 +14,10 @@ export interface Env {
   ADMIN_EMAILS: string;
 }
 
-export type AppEnv = { Bindings: Env };
+/** Variabili impostate a runtime (es. dal middleware di auth). */
+export interface Variables {
+  user: User;
+  session: Session;
+}
+
+export type AppEnv = { Bindings: Env; Variables: Variables };

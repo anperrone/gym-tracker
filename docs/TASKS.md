@@ -53,46 +53,48 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 **Checkpoint M0**: `npm run dev`/`build` ok, D1 migra, `npm run check` verde, E2E smoke verde, pre-commit hook attivo.
 
+**Delivery M0**: repo **pubblico** `anperrone/gym-tracker`; consegnato via PR #1 (squash) → `main`. CI verde (`check` + `e2e` + GitGuardian). Hardening: **ruleset attivo** su `main` (PR obbligatoria, check `check`/`e2e` richiesti, no force-push/delete, linear history) + merge solo squash/rebase + auto-delete branch + Dependabot; hook `pre-push` blocca push su `main`.
+
 ---
 
 ## M1 — Auth (Google OAuth + sessioni)
 
-- [ ] **T1.1 — Schema `users` + `sessions`**
-  - Acceptance: tabelle Drizzle `users` (con `google_sub` unique, `role`) e `sessions` (token hashed, `expires_at`); migrazione applicata
-  - Verify: `npm run db:migrate` ok; test che inserisce/legge un utente
-  - Files: `src/server/db/schema.ts`, `migrations/*`, `tests/db/users.test.ts`
+- [x] **T1.1 — Schema `users` + `sessions`**
+  - Acceptance: tabelle Drizzle `users` (con `google_sub` unique, `role` user/admin) e `sessions` (id = hash token, `expires_at`, FK cascade); migrazione `0000_absurd_spirit.sql` generata e applicata. Infra test: migrazioni auto-applicate al D1 pool-workers.
+  - Verify: `npm run db:migrate` ok; test `tabella users` (insert/read + unique) verde; `npm run check` verde (6 test).
+  - Files: `src/server/db/schema.ts`, `migrations/0000_absurd_spirit.sql`, `tests/db/users.test.ts`, `tests/apply-migrations.ts`, `vitest.config.ts`
 
-- [ ] **T1.2 — Config OAuth Google (`arctic`) + segreti**
-  - Acceptance: provider Google con PKCE; `GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI` da env; redirect URI dev/prod documentati in README
-  - Verify: typecheck; `.dev.vars.example` aggiornato; nessun segreto nel repo
-  - Files: `src/server/auth/google.ts`, `.dev.vars.example`, `README.md`
+- [x] **T1.2 — Config OAuth Google (Web Crypto, no arctic) + segreti**
+  - Acceptance: OAuth 2.0 + PKCE (S256) implementato con Web Crypto (arctic **rimosso**, deprecato); `GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI` da env; redirect URI dev/prod in README
+  - Verify: typecheck ok; `.dev.vars.example` + README aggiornati; nessun segreto nel repo
+  - Files: `src/server/auth/oauth.ts`, `src/server/auth/crypto.ts`, `src/server/config.ts`, `.dev.vars.example`, `README.md`
 
-- [ ] **T1.3 — Route auth (login / callback / logout)**
+- [x] **T1.3 — Route auth (login / callback / logout)**
   - Acceptance: `GET /auth/google/login` (state+PKCE in cookie, redirect Google); `GET /auth/google/callback` (scambio code, fetch userinfo, upsert `users`, crea sessione, set cookie); `POST /auth/logout` (revoca)
   - Verify: login reale in dev crea utente e sessione; logout invalida
   - Files: `src/server/routes/auth.ts`, `src/server/index.ts`
 
-- [ ] **T1.4 — Modulo sessioni (D1)**
+- [x] **T1.4 — Modulo sessioni (D1)**
   - Acceptance: create/validate/renew (sliding)/revoke; token **hashed** in D1; cookie HttpOnly+Secure+SameSite=Lax
   - Verify: unit test su hashing/scadenza/rinnovo; test revoca
   - Files: `src/server/auth/session.ts`, `tests/auth/session.test.ts`
 
-- [ ] **T1.5 — Middleware `requireAuth` + allowlist admin**
+- [x] **T1.5 — Middleware `requireAuth` + allowlist admin**
   - Acceptance: middleware default-deny che popola `c.get('user')`; email in **allowlist** → ruolo `admin` al primo login
   - Verify: test — anonimo bloccato (401); email allowlist ottiene `admin`
   - Files: `src/server/middleware/auth.ts`, `src/server/config.ts`, `tests/auth/authz.test.ts`
 
-- [ ] **T1.6 — Frontend auth (login + rotte protette)**
+- [x] **T1.6 — Frontend auth (login + rotte protette)**
   - Acceptance: contesto/hook auth; pagina login con bottone Google; `GET /api/me`; wrapper rotte protette che redirige gli anonimi
   - Verify: E2E — flusso login (Google mockato) porta a home autenticata
   - Files: `src/client/features/auth/*`, `src/server/routes/me.ts`, `src/client/routes/`
 
-- [ ] **T1.7 — Test auth (integrazione + E2E)**
+- [x] **T1.7 — Test auth (integrazione + E2E)**
   - Acceptance: integrazione (requireAuth blocca anon; callback crea utente; logout invalida); E2E login con Google mockato
   - Verify: `npm test` + `npm run test:e2e` verdi
   - Files: `tests/auth/*.test.ts`, `e2e/auth.spec.ts`
 
-**Checkpoint M1**: login reale in dev; sessione persistente; `requireAuth` protegge; allowlist admin funziona.
+**Checkpoint M1** ✅: OAuth Google (Web Crypto+PKCE), sessioni D1, `requireAuth` + allowlist admin, frontend login/rotte protette/logout. 15 test unit/integrazione + 3 E2E verdi; build ok. E2E usa un seam dev `/auth/test-login` (gated `import.meta.env.DEV`, **assente in produzione** — verificato). Login reale con Google richiede credenziali OAuth in `.dev.vars`.
 
 ---
 
