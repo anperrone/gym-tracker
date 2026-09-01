@@ -25,8 +25,9 @@ export function useSessionMutations(id: string) {
     deleteExercise: useDetailMutation(detailKey, workoutKeys.list, (seId: string) =>
       api.deleteSessionExercise(id, seId),
     ),
-    // Le mutation delle serie sono ottimistiche: l'inserimento offline è immediato
-    // e viene sincronizzato al ritorno online (idempotente per client_id/sessione).
+    // Le mutation delle serie sono ottimistiche: l'inserimento offline è immediato e
+    // viene sincronizzato alla riconnessione (la coda in pausa si riprende una sola volta,
+    // quindi niente doppie POST; gli endpoint /sets non hanno un client_id proprio).
     addSet: useDetailMutation(
       detailKey,
       workoutKeys.list,

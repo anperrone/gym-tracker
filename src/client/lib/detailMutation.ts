@@ -1,13 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-type OptimisticContext<TDetail> = { previous: TDetail | undefined };
-
 /**
  * Mutation che restituisce un DTO di dettaglio aggiornato: scrive la cache del dettaglio
  * e invalida la lista. Condivisa da schede e allenamenti (parametrizzata sulle query key).
  *
  * Con `optimistic`, applica subito l'aggiornamento alla cache (anche offline, quando la
- * mutation è in pausa) e fa rollback in caso di errore — usato per il logging offline.
+ * mutation è in pausa) — usato per il logging offline. In caso di errore riconcilia con il
+ * server via refetch (non ripristina uno snapshot, che cancellerebbe gli update concorrenti).
  */
 export function useDetailMutation<TDetail, TArgs>(
   detailKey: readonly unknown[],
@@ -19,17 +18,15 @@ export function useDetailMutation<TDetail, TArgs>(
   return useMutation({
     mutationFn: fn,
     onMutate: optimistic
-      ? async (args: TArgs): Promise<OptimisticContext<TDetail>> => {
+      ? async (args: TArgs) => {
           await qc.cancelQueries({ queryKey: detailKey });
           const previous = qc.getQueryData<TDetail>(detailKey);
           if (previous !== undefined) qc.setQueryData(detailKey, optimistic(previous, args));
-          return { previous };
         }
       : undefined,
     onError: optimistic
-      ? (_err, _args, ctx) => {
-          const previous = (ctx as OptimisticContext<TDetail> | undefined)?.previous;
-          if (previous !== undefined) qc.setQueryData(detailKey, previous);
+      ? () => {
+          void qc.invalidateQueries({ queryKey: detailKey });
         }
       : undefined,
     onSuccess: (detail) => {

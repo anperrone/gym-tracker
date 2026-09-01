@@ -19,6 +19,15 @@ export const queryClient = new QueryClient({
 
 const persister = createIdbPersister();
 
+/**
+ * Svuota la cache persistita (IndexedDB) e in memoria. Da chiamare al logout: su un
+ * dispositivo condiviso l'utente successivo non deve vedere i dati del precedente.
+ */
+export async function clearOfflineCache(): Promise<void> {
+  await persister.removeClient();
+  queryClient.clear();
+}
+
 export function QueryProvider({ children }: { children: ReactNode }) {
   return (
     <PersistQueryClientProvider
@@ -26,11 +35,13 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       persistOptions={{
         persister,
         maxAge: WEEK,
-        // Persisti anche le mutation in pausa (coda offline), oltre alle query.
-        dehydrateOptions: { shouldDehydrateMutation: () => true },
+        // Persiste solo le query (letture offline). Le mutation NON vengono persistite:
+        // dopo un reload non sarebbero rieseguibili senza mutationFn. La coda offline vive
+        // in memoria e si sincronizza alla riconnessione mentre l'app è aperta.
+        dehydrateOptions: { shouldDehydrateMutation: () => false },
       }}
       onSuccess={() => {
-        // Al ripristino della cache, riprendi le mutation messe in coda offline.
+        // Al ripristino, riprendi eventuali mutation in pausa ancora in memoria.
         void queryClient.resumePausedMutations();
       }}
     >
