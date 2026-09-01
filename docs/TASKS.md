@@ -255,31 +255,31 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ---
 
-## M6 — Offline/PWA (priorità corrente)
+## M6 — Offline/PWA ✅ (branch `feat/m6-offline`)
 
 > Avviato 2026-09-01 dopo M5. Branch: `feat/m6-offline`. Riferimento: `SPEC.md` §3/§4 (offline-first) e criteri: *registrare una serie funziona offline; i dati offline si sincronizzano senza duplicati al ritorno online; app installabile*. **Scelta architetturale**: si usa la **persistenza nativa di TanStack Query su IndexedDB** (cache offline + coda mutation in pausa) al posto di un layer Dexie separato — più semplice e idiomatico; l'idempotenza è garantita dal `client_id` (indice UNIQUE su sessioni, M5) e dagli upsert lato server.
 
-- [ ] **T6.1 — PWA installabile (`vite-plugin-pwa` + manifest + SW)**
+- [x] **T6.1 — PWA installabile (`vite-plugin-pwa` + manifest + SW)**
   - Acceptance: `vite-plugin-pwa` (Workbox) con `registerType: autoUpdate`; `manifest.webmanifest` (nome, tema, icone 192/512, `display: standalone`); precache app shell; registrazione SW in `main.tsx`; icone in `public/`
   - Verify: `npm run build` emette `sw.js` + `manifest.webmanifest`; test unit su presenza manifest/config; `npm run check` verde
   - Files: `vite.config.ts`, `src/client/main.tsx`, `public/` (icone), `src/client/pwa.ts`, test
 
-- [ ] **T6.2 — Persistenza query client su IndexedDB (letture offline)**
+- [x] **T6.2 — Persistenza query client su IndexedDB (letture offline)**
   - Acceptance: `PersistQueryClientProvider` con persister IndexedDB (`idb-keyval`); `gcTime` adeguato; le query già caricate sopravvivono a reload/offline; `resumePausedMutations` al restore
   - Verify: unit sul persister (round-trip); `npm run check` verde
   - Files: `src/client/lib/query.tsx`, `src/client/lib/idbPersister.ts`, test
 
-- [ ] **T6.3 — Coda mutation offline + optimistic sync (logging)**
+- [x] **T6.3 — Coda mutation offline + optimistic sync (logging)**
   - Acceptance: le mutation offline vanno in **pausa** e si riprendono automaticamente al ritorno online; **optimistic update** per il logging serie (addSet/updateSet/deleteSet) così l'inserimento offline è immediato; rollback su errore; idempotenza al replay via `client_id`
   - Verify: unit sull'applicazione optimistic al detail cache; `npm run check` verde
   - Files: `src/client/features/workouts/useWorkoutSession.ts`, `src/client/lib/optimistic.ts`, test
 
-- [ ] **T6.4 — Test idempotenza sync (replay)**
+- [x] **T6.4 — Test idempotenza sync (replay)**
   - Acceptance: integrazione — replay dello stesso `client_id` (start sessione) e delle mutation non duplica; unit sulla logica di coda/merge
   - Verify: `npm test` verde
   - Files: `tests/workouts/sync.test.ts`
 
-- [ ] **T6.5 — E2E offline→sync + install**
+- [x] **T6.5 — E2E offline→sync + install**
   - Acceptance: E2E — `context.setOffline(true)`, registra/aggiorna una serie offline (UI ottimistica), riconnessione → sync automatico senza duplicati; app carica offline dalla cache; manifest/SW presenti
   - Verify: `npm run test:e2e` verde
   - Files: `e2e/offline.spec.ts`

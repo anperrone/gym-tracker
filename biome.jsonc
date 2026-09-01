@@ -17,6 +17,7 @@
     "includes": [
       "**",
       "!!**/dist",
+      "!!**/dev-dist",
       "!!**/.wrangler",
       "!!**/coverage",
       "!!**/playwright-report",
