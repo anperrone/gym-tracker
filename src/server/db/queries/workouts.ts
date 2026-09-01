@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
+import type { BatchItem } from 'drizzle-orm/batch';
 import type {
   AddSessionExerciseInput,
   CreateSetInput,
@@ -45,16 +46,16 @@ export async function getSessionDetail(
   const session = await ownedSession(db, userId, id);
   if (!session) return null;
 
+  // Nome/attrezzatura dallo snapshot in session_exercises (la storia sopravvive all'eliminazione dal catalogo).
   const exRows = await db
     .select({
       id: sessionExercises.id,
       exerciseId: sessionExercises.exerciseId,
-      exerciseName: exercises.name,
-      equipment: exercises.equipment,
+      exerciseName: sessionExercises.exerciseName,
+      equipment: sessionExercises.equipment,
       sortOrder: sessionExercises.sortOrder,
     })
     .from(sessionExercises)
-    .innerJoin(exercises, eq(sessionExercises.exerciseId, exercises.id))
     .where(eq(sessionExercises.workoutSessionId, id))
     .orderBy(asc(sessionExercises.sortOrder));
 
@@ -150,20 +151,45 @@ export async function listSessions(db: Db, userId: string): Promise<WorkoutSessi
   }));
 }
 
-/** Esercizi pianificati di un giorno di scheda posseduto dall'utente (per pre-popolazione). */
+/** True se il giorno di scheda appartiene all'utente. */
+async function dayIsOwned(db: Db, userId: string, planDayId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: planDays.id })
+    .from(planDays)
+    .innerJoin(workoutPlans, eq(planDays.planId, workoutPlans.id))
+    .where(and(eq(planDays.id, planDayId), eq(workoutPlans.userId, userId)));
+  return row !== undefined;
+}
+
+/** Esercizi pianificati di un giorno di scheda (con nome/attrezzatura per lo snapshot). */
 async function ownedPlanDayExercises(db: Db, userId: string, planDayId: string) {
   return db
     .select({
       exerciseId: planExercises.exerciseId,
-      sortOrder: planExercises.sortOrder,
+      exerciseName: exercises.name,
+      equipment: exercises.equipment,
       targetSets: planExercises.targetSets,
       targetWeight: planExercises.targetWeight,
     })
     .from(planExercises)
     .innerJoin(planDays, eq(planExercises.planDayId, planDays.id))
     .innerJoin(workoutPlans, eq(planDays.planId, workoutPlans.id))
+    .innerJoin(exercises, eq(planExercises.exerciseId, exercises.id))
     .where(and(eq(planDays.id, planDayId), eq(workoutPlans.userId, userId)))
     .orderBy(asc(planExercises.sortOrder));
+}
+
+/** Id della sessione con quel clientId per l'utente (per l'idempotenza). */
+async function findSessionByClientId(
+  db: Db,
+  userId: string,
+  clientId: string,
+): Promise<string | undefined> {
+  const [row] = await db
+    .select({ id: workoutSessions.id })
+    .from(workoutSessions)
+    .where(and(eq(workoutSessions.userId, userId), eq(workoutSessions.clientId, clientId)));
+  return row?.id;
 }
 
 export type StartSessionResult = { created: boolean; detail: WorkoutSessionDetailDto };
@@ -172,60 +198,88 @@ export type StartSessionResult = { created: boolean; detail: WorkoutSessionDetai
  * Avvia una sessione. Idempotente per (userId, clientId): un replay restituisce la stessa
  * sessione senza duplicarla. Con planDayId di proprietà pre-popola esercizi (+ serie dai target).
  */
+/** Se esiste già una sessione con quel clientId, restituisce il risultato idempotente. */
+async function existingSessionResult(
+  db: Db,
+  userId: string,
+  clientId: string,
+): Promise<StartSessionResult | null> {
+  const id = await findSessionByClientId(db, userId, clientId);
+  if (!id) return null;
+  const detail = await getSessionDetail(db, userId, id);
+  return detail ? { created: false, detail } : null;
+}
+
 export async function startSession(
   db: Db,
   userId: string,
   input: StartSessionInput,
 ): Promise<StartSessionResult> {
-  const [existing] = await db
-    .select({ id: workoutSessions.id })
-    .from(workoutSessions)
-    .where(and(eq(workoutSessions.userId, userId), eq(workoutSessions.clientId, input.clientId)));
-  if (existing) {
-    const detail = await getSessionDetail(db, userId, existing.id);
-    // Esiste per forza (appena trovata), ma restringiamo il tipo.
-    if (detail) return { created: false, detail };
-  }
+  // Fast-path idempotenza: replay dello stesso clientId → stessa sessione.
+  const existing = await existingSessionResult(db, userId, input.clientId);
+  if (existing) return existing;
 
-  // Pre-popola dagli esercizi del giorno di scheda, solo se è di proprietà dell'utente.
-  const planExs = input.planDayId ? await ownedPlanDayExercises(db, userId, input.planDayId) : [];
-  const planDayId = input.planDayId && planExs.length > 0 ? input.planDayId : null;
+  // Associa il giorno di scheda solo se di proprietà (anche se ha 0 esercizi).
+  const owned = input.planDayId ? await dayIsOwned(db, userId, input.planDayId) : false;
+  const planDayId = owned && input.planDayId ? input.planDayId : null;
 
   const sessionId = crypto.randomUUID();
-  await db.insert(workoutSessions).values({
-    id: sessionId,
-    userId,
-    planDayId,
-    clientId: input.clientId,
-    notes: input.notes ?? null,
-    ...(input.performedAt ? { performedAt: new Date(input.performedAt) } : {}),
-  });
-
-  for (const [i, pe] of planExs.entries()) {
-    const seId = crypto.randomUUID();
-    await db.insert(sessionExercises).values({
-      id: seId,
-      workoutSessionId: sessionId,
-      exerciseId: pe.exerciseId,
-      sortOrder: i,
+  try {
+    await db.insert(workoutSessions).values({
+      id: sessionId,
+      userId,
+      planDayId,
+      clientId: input.clientId,
+      notes: input.notes ?? null,
+      ...(input.performedAt ? { performedAt: new Date(input.performedAt) } : {}),
     });
-    // Pre-crea le serie target (peso dal piano, reps da compilare).
-    const setCount = pe.targetSets ?? 0;
-    if (setCount > 0) {
-      await db.insert(sessionSets).values(
-        Array.from({ length: setCount }, (_, n) => ({
-          id: crypto.randomUUID(),
-          sessionExerciseId: seId,
-          setNumber: n + 1,
-          weight: pe.targetWeight ?? null,
-        })),
-      );
-    }
+  } catch (err) {
+    // Corsa: un replay concorrente ha già creato la sessione (unique su user+client_id).
+    const raced = await existingSessionResult(db, userId, input.clientId);
+    if (raced) return raced;
+    throw err;
   }
+
+  if (planDayId) await prepopulateFromPlanDay(db, userId, sessionId, planDayId);
 
   const detail = await getSessionDetail(db, userId, sessionId);
   if (!detail) throw new Error('sessione creata ma non recuperabile');
   return { created: true, detail };
+}
+
+/** Copia gli esercizi del giorno di scheda nella sessione (snapshot), atomicamente. */
+async function prepopulateFromPlanDay(
+  db: Db,
+  userId: string,
+  sessionId: string,
+  planDayId: string,
+): Promise<void> {
+  const planExs = await ownedPlanDayExercises(db, userId, planDayId);
+  const exRows = planExs.map((pe, i) => ({ seId: crypto.randomUUID(), pe, sortOrder: i }));
+  if (exRows.length === 0) return;
+
+  const setRows = exRows.flatMap(({ seId, pe }) =>
+    Array.from({ length: pe.targetSets ?? 0 }, (_, n) => ({
+      id: crypto.randomUUID(),
+      sessionExerciseId: seId,
+      setNumber: n + 1,
+      weight: pe.targetWeight ?? null,
+    })),
+  );
+  const statements: BatchItem<'sqlite'>[] = [
+    db.insert(sessionExercises).values(
+      exRows.map(({ seId, pe, sortOrder }) => ({
+        id: seId,
+        workoutSessionId: sessionId,
+        exerciseId: pe.exerciseId,
+        exerciseName: pe.exerciseName,
+        equipment: pe.equipment,
+        sortOrder,
+      })),
+    ),
+  ];
+  if (setRows.length > 0) statements.push(db.insert(sessionSets).values(setRows));
+  await db.batch(statements as [BatchItem<'sqlite'>, ...BatchItem<'sqlite'>[]]);
 }
 
 export async function updateSession(
@@ -254,15 +308,15 @@ export async function deleteSession(db: Db, userId: string, id: string): Promise
 
 // --- Esercizi & serie della sessione (le mutation restituiscono il dettaglio aggiornato) ---
 
-/** True se l'esercizio è visibile all'utente (catalogo globale o suo custom). */
-async function isExerciseVisible(db: Db, userId: string, exerciseId: string): Promise<boolean> {
+/** Esercizio visibile all'utente (globale o custom proprio) con nome/attrezzatura, o undefined. */
+async function getVisibleExercise(db: Db, userId: string, exerciseId: string) {
   const [row] = await db
-    .select({ id: exercises.id })
+    .select({ name: exercises.name, equipment: exercises.equipment })
     .from(exercises)
     .where(
       and(eq(exercises.id, exerciseId), or(isNull(exercises.userId), eq(exercises.userId, userId))),
     );
-  return row !== undefined;
+  return row;
 }
 
 export type AddSessionExerciseResult =
@@ -276,9 +330,8 @@ export async function addSessionExercise(
   input: AddSessionExerciseInput,
 ): Promise<AddSessionExerciseResult> {
   if (!(await ownedSession(db, userId, sessionId))) return { ok: false, error: 'not_found' };
-  if (!(await isExerciseVisible(db, userId, input.exerciseId))) {
-    return { ok: false, error: 'invalid_exercise' };
-  }
+  const ex = await getVisibleExercise(db, userId, input.exerciseId);
+  if (!ex) return { ok: false, error: 'invalid_exercise' };
 
   const [{ max }] = await db
     .select({ max: sql<number>`coalesce(max(${sessionExercises.sortOrder}), -1)` })
@@ -289,6 +342,8 @@ export async function addSessionExercise(
     id: crypto.randomUUID(),
     workoutSessionId: sessionId,
     exerciseId: input.exerciseId,
+    exerciseName: ex.name,
+    equipment: ex.equipment,
     sortOrder: max + 1,
   });
   await touchSession(db, sessionId);

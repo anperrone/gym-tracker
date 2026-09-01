@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "ff6d21fa-8423-4b37-96d4-90fb33b1aa3d",
+  "id": "b3f6817c-13c3-4191-88f3-973432d27b6e",
   "prevId": "6dab4d6c-277c-4e91-9f75-60ed932bc466",
   "tables": {
     "exercises": {
@@ -503,8 +503,23 @@
           "name": "exercise_id",
           "type": "text",
           "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "exercise_name": {
+          "name": "exercise_name",
+          "type": "text",
+          "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "equipment": {
+          "name": "equipment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'other'"
         },
         "sort_order": {
           "name": "sort_order",
@@ -538,7 +553,7 @@
           "tableTo": "exercises",
           "columnsFrom": ["exercise_id"],
           "columnsTo": ["id"],
-          "onDelete": "cascade",
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -917,7 +932,7 @@
         "workout_sessions_user_client_idx": {
           "name": "workout_sessions_user_client_idx",
           "columns": ["user_id", "client_id"],
-          "isUnique": false
+          "isUnique": true
         }
       },
       "foreignKeys": {

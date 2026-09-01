@@ -59,8 +59,7 @@ export function SessionExerciseCard({
       <button
         type="button"
         onClick={addSet}
-        disabled={mutations.addSet.isPending}
-        className="inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline disabled:opacity-50"
+        className="inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline"
       >
         <PlusIcon className="h-4 w-4" /> Aggiungi serie
       </button>

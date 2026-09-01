@@ -6,6 +6,7 @@ import {
   real,
   sqliteTable,
   text,
+  uniqueIndex,
 } from 'drizzle-orm/sqlite-core';
 import { EQUIPMENT_VALUES } from '../../shared/schemas';
 
@@ -219,10 +220,14 @@ export const workoutSessions = sqliteTable(
   },
   (t) => [
     index('workout_sessions_user_id_idx').on(t.userId),
-    index('workout_sessions_user_client_idx').on(t.userId, t.clientId),
+    // Unique per idempotenza: un replay dello stesso (user, client_id) non duplica.
+    // I client_id NULL (inserimenti diretti) restano distinti in SQLite.
+    uniqueIndex('workout_sessions_user_client_idx').on(t.userId, t.clientId),
   ],
 );
 
+// Esercizio svolto: nome/attrezzatura sono uno **snapshot** al momento del log, così la
+// storia resta anche se la voce di catalogo viene eliminata (exercise_id → set null).
 export const sessionExercises = sqliteTable(
   'session_exercises',
   {
@@ -230,9 +235,9 @@ export const sessionExercises = sqliteTable(
     workoutSessionId: text('workout_session_id')
       .notNull()
       .references(() => workoutSessions.id, { onDelete: 'cascade' }),
-    exerciseId: text('exercise_id')
-      .notNull()
-      .references(() => exercises.id, { onDelete: 'cascade' }),
+    exerciseId: text('exercise_id').references(() => exercises.id, { onDelete: 'set null' }),
+    exerciseName: text('exercise_name').notNull(),
+    equipment: text('equipment', { enum: EQUIPMENT }).notNull().default('other'),
     sortOrder: integer('sort_order').notNull().default(0),
   },
   (t) => [index('session_exercises_session_id_idx').on(t.workoutSessionId)],

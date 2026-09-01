@@ -228,7 +228,8 @@ export type SessionSetDto = z.infer<typeof sessionSetSchema>;
 
 export const sessionExerciseSchema = z.object({
   id: z.string(),
-  exerciseId: z.string(),
+  // Null se la voce di catalogo è stata eliminata dopo il log (lo snapshot del nome resta).
+  exerciseId: z.string().nullable(),
   exerciseName: z.string(),
   equipment: equipmentSchema,
   sortOrder: z.number().int(),

@@ -7,7 +7,13 @@ import { usePlanDetail } from '@/features/plans/usePlanDetail';
 import { usePlans } from '@/features/plans/usePlans';
 import { useDeleteSession, useSessions, useStartSession } from '@/features/workouts/useWorkouts';
 
-function StartFromPlan({ onStart }: { onStart: (planDayId: string) => void }) {
+function StartFromPlan({
+  onStart,
+  pending,
+}: {
+  onStart: (planDayId: string) => void;
+  pending: boolean;
+}) {
   const { data: plans = [] } = usePlans();
   const [planId, setPlanId] = useState('');
   const [dayId, setDayId] = useState('');
@@ -53,7 +59,7 @@ function StartFromPlan({ onStart }: { onStart: (planDayId: string) => void }) {
         )}
         <button
           type="button"
-          disabled={dayId === ''}
+          disabled={dayId === '' || pending}
           onClick={() => onStart(dayId)}
           className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-fg transition-opacity hover:opacity-90 disabled:opacity-50"
         >
@@ -95,7 +101,7 @@ export function WorkoutPage() {
         >
           Avvia allenamento libero
         </button>
-        <StartFromPlan onStart={(dayId) => begin(dayId)} />
+        <StartFromPlan onStart={(dayId) => begin(dayId)} pending={start.isPending} />
       </section>
 
       {active.length > 0 && (

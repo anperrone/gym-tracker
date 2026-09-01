@@ -102,6 +102,9 @@ function LoadedSession({
               mutations.addExercise.mutate(ex.id, { onSuccess: () => setAdding(false) })
             }
           />
+          {mutations.addExercise.isError && (
+            <p className="text-xs text-negative">Impossibile aggiungere l'esercizio. Riprova.</p>
+          )}
           <button
             type="button"
             onClick={() => setAdding(false)}
