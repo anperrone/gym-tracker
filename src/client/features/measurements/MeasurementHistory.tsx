@@ -1,3 +1,5 @@
+import { IconButton } from '@/components/IconButton';
+import { TrashIcon } from '@/components/icons';
 import { useDeleteMeasurement, useMeasurements, useMeasurementTypes } from './useMeasurements';
 
 export function MeasurementHistory() {
@@ -6,32 +8,28 @@ export function MeasurementHistory() {
   const del = useDeleteMeasurement();
   const typeById = new Map(types.map((t) => [t.id, t]));
 
-  if (isPending) return <p className="text-sm text-slate-400">Caricamento…</p>;
+  if (isPending) return <p className="text-sm text-text-muted">Caricamento…</p>;
   if (entries.length === 0)
-    return <p className="text-sm text-slate-400">Nessuna misurazione ancora.</p>;
+    return <p className="text-sm text-text-muted">Nessuna misurazione ancora.</p>;
 
   return (
     <ul aria-label="Storico misurazioni" className="space-y-3">
       {entries.map((e) => (
-        <li key={e.id} className="rounded-lg border border-slate-200 bg-white p-3">
+        <li key={e.id} className="rounded-2xl border border-border bg-surface p-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">
+            <span className="text-sm font-medium text-text">
               {new Date(e.measuredAt).toLocaleDateString('it-IT')}
             </span>
-            <button
-              type="button"
-              onClick={() => del.mutate(e.id)}
-              className="text-xs font-medium text-red-600"
-            >
-              Elimina
-            </button>
+            <IconButton label="Elimina" onClick={() => del.mutate(e.id)}>
+              <TrashIcon className="h-4 w-4" />
+            </IconButton>
           </div>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600">
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-text-muted tabular-nums">
             {e.values.map((v) => {
               const t = typeById.get(v.typeId);
               return (
                 <span key={v.typeId}>
-                  {t?.label ?? v.typeId}: <b>{v.value}</b>
+                  {t?.label ?? v.typeId}: <b className="text-text">{v.value}</b>
                   {t ? ` ${t.unit}` : ''}
                 </span>
               );

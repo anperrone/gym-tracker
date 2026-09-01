@@ -132,7 +132,7 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
   - Verify: `AppShell.test.tsx` aggiornato passa; `npm run check` verde
   - Files: `src/client/components/AppShell.tsx`, `src/client/features/auth/LoginPage.tsx`, `AppShell.test.tsx`
 
-- [ ] **TU.5 — Pagina Misure: stat overview + restyle form/storico**
+- [x] **TU.5 — Pagina Misure: stat overview + restyle form/storico**
   - Acceptance: riga di **stat tiles** (ultimo valore + Δ vs precedente, colore **neutro** non giudicante) dai dati esistenti; stato vuoto a tema; `MeasurementsPage`, `MeasurementHistory`, `MeasurementForm` restyled a tema
   - Verify: unit calcolo Δ; E2E overview mostra ultimo valore + Δ; `npm run check` verde
   - Files: `src/client/features/measurements/StatOverview.tsx`, `MeasurementsPage.tsx`, `MeasurementHistory.tsx`, `MeasurementForm.tsx`, test

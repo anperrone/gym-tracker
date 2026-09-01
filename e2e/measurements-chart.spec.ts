@@ -5,6 +5,17 @@ async function login(page: import('@playwright/test').Page, email: string) {
   expect(res.ok()).toBeTruthy();
 }
 
+async function seedWeight(
+  page: import('@playwright/test').Page,
+  measuredAt: string,
+  value: number,
+) {
+  const res = await page.request.post('/api/measurements', {
+    data: { measuredAt, values: [{ typeId: 'mt_weight', value }] },
+  });
+  expect(res.ok(), `seed ${measuredAt}`).toBeTruthy();
+}
+
 // Regressione del bug "asse Y tagliato": le etichette dei tick Y devono essere
 // completamente dentro il box del grafico (nessun clipping a sinistra), su più viewport.
 // In Recharts v3 le tick-label sono in un layer separato (.recharts-yAxis-tick-labels).
@@ -12,16 +23,8 @@ const Y_TICKS = '.recharts-yAxis-tick-labels .recharts-cartesian-axis-tick-value
 
 test('il grafico mostra le etichette dell’asse Y senza tagli', async ({ page }) => {
   await login(page, 'e2e-chart@example.com');
-  await page.goto('/measurements');
-
-  // Crea un dato (metrica Peso, selezionata di default) e attende il commit lato server.
-  await page.getByLabel(/^Peso/).fill('72.4');
-  await Promise.all([
-    page.waitForResponse(
-      (r) => r.url().endsWith('/api/measurements') && r.request().method() === 'POST' && r.ok(),
-    ),
-    page.getByRole('button', { name: /Salva misurazione/ }).click(),
-  ]);
+  await seedWeight(page, '2025-01-01', 70);
+  await seedWeight(page, '2025-02-01', 72.4);
 
   for (const width of [320, 390, 1280]) {
     await page.setViewportSize({ width, height: 800 });
