@@ -1,5 +1,5 @@
 import type { Equipment, ExerciseDto, ExerciseFilters } from '@shared/schemas';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Card } from '@/components/Card';
 import { IconButton } from '@/components/IconButton';
 import { LinkIcon, TrashIcon } from '@/components/icons';
@@ -18,21 +18,27 @@ function groupByEquipment(rows: ExerciseDto[]): [Equipment, ExerciseDto[]][] {
     arr.push(row);
     map.set(row.equipment, arr);
   }
-  // Ordine coerente con EQUIPMENT_OPTIONS.
-  return EQUIPMENT_OPTIONS.filter(([eq]) => map.has(eq)).map(([eq]) => [eq, map.get(eq) ?? []]);
+  // Ordine coerente con EQUIPMENT_OPTIONS, solo i gruppi presenti.
+  return EQUIPMENT_OPTIONS.flatMap(([eq]) => {
+    const items = map.get(eq);
+    return items ? [[eq, items] as [Equipment, ExerciseDto[]]] : [];
+  });
 }
 
 export function ExerciseList({ filters }: { filters: ExerciseFilters }) {
   const { data: rows = [], isPending } = useExercises(filters);
+  // Elenco completo (non filtrato) per risolvere il nome della canonica anche sotto filtro.
+  const { data: allRows = [] } = useExercises({});
   const del = useDeleteExercise();
   const [linkingId, setLinkingId] = useState<string | null>(null);
+  const closeLink = useCallback(() => setLinkingId(null), []);
 
   if (isPending) return <p className="text-sm text-text-muted">Caricamento…</p>;
   if (rows.length === 0)
     return <p className="text-sm text-text-muted">Nessun esercizio trovato.</p>;
 
   const groups = groupByEquipment(rows);
-  const nameById = new Map(rows.map((r) => [r.id, r.name]));
+  const nameById = new Map(allRows.map((r) => [r.id, r.name]));
   const linking = rows.find((r) => r.id === linkingId) ?? null;
 
   return (
@@ -87,7 +93,7 @@ export function ExerciseList({ filters }: { filters: ExerciseFilters }) {
           canonicalName={
             linking.canonicalExerciseId ? (nameById.get(linking.canonicalExerciseId) ?? null) : null
           }
-          onClose={() => setLinkingId(null)}
+          onClose={closeLink}
         />
       )}
     </div>

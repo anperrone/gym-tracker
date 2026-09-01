@@ -7,6 +7,7 @@ import {
   sqliteTable,
   text,
 } from 'drizzle-orm/sqlite-core';
+import { EQUIPMENT_VALUES } from '../../shared/schemas';
 
 // Schema Drizzle (D1 / SQLite).
 
@@ -102,16 +103,8 @@ export type NewMeasurementValue = typeof measurementValues.$inferInsert;
 
 // --- Catalogo esercizi (M3) ---
 
-export const EQUIPMENT = [
-  'barbell',
-  'dumbbell',
-  'machine',
-  'cable',
-  'bodyweight',
-  'kettlebell',
-  'cardio',
-  'other',
-] as const;
+// Sorgente unica dei valori equipment: la tupla condivisa (evita drift DB/API/UI).
+export const EQUIPMENT = EQUIPMENT_VALUES;
 
 // Esercizi: user_id NULL = catalogo globale (curato dall'admin); valorizzato = custom utente.
 // canonical_exercise_id collega un custom/testo libero a una voce di catalogo per unificare la progressione.

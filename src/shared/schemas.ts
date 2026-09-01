@@ -74,7 +74,8 @@ export type MeasurementSeriesPoint = z.infer<typeof measurementSeriesPointSchema
 
 // --- Catalogo esercizi (M3) ---
 
-export const equipmentSchema = z.enum([
+/** Valori `equipment` — sorgente unica condivisa da DB (enum colonna), API (Zod) e UI. */
+export const EQUIPMENT_VALUES = [
   'barbell',
   'dumbbell',
   'machine',
@@ -83,7 +84,8 @@ export const equipmentSchema = z.enum([
   'kettlebell',
   'cardio',
   'other',
-]);
+] as const;
+export const equipmentSchema = z.enum(EQUIPMENT_VALUES);
 export type Equipment = z.infer<typeof equipmentSchema>;
 
 /** Esercizio del catalogo (globale o custom dell'utente). */

@@ -65,6 +65,25 @@ describe('API esercizi', () => {
     expect(squats.every((e) => e.name.toLowerCase().includes('squat'))).toBe(true);
   });
 
+  it('tratta i metacaratteri LIKE come testo letterale', async () => {
+    const { cookie } = await seedUserWithSession();
+    // `_` è un carattere letterale, non un jolly: "leg_press" non matcha "Leg Press".
+    const underscore = await app.request(
+      '/api/exercises?search=leg_press',
+      { headers: { Cookie: cookie } },
+      env,
+    );
+    expect((await underscore.json()) as ExerciseDto[]).toHaveLength(0);
+
+    // `%` letterale: nessun esercizio del seed lo contiene.
+    const percent = await app.request(
+      '/api/exercises?search=%25',
+      { headers: { Cookie: cookie } },
+      env,
+    );
+    expect((await percent.json()) as ExerciseDto[]).toHaveLength(0);
+  });
+
   it('rifiuta equipment non valido (400)', async () => {
     const { cookie } = await seedUserWithSession();
     const res = await app.request(
@@ -122,6 +141,40 @@ describe('API esercizi', () => {
     const { cookie } = await seedUserWithSession();
     const res = await post(cookie, { name: 'X', canonicalExerciseId: 'ex_inesistente' });
     expect(res.status).toBe(400);
+  });
+
+  it('rifiuta una canonica non globale: no link custom→custom (400)', async () => {
+    const { cookie } = await seedUserWithSession();
+    const other = (await (await post(cookie, { name: 'Altro custom' })).json()) as ExerciseDto;
+
+    // In creazione: canonica = un custom → rifiutata.
+    const create = await post(cookie, { name: 'Y', canonicalExerciseId: other.id });
+    expect(create.status).toBe(400);
+
+    // In update: PATCH verso un custom → rifiutato (niente self-link né cicli).
+    const target = (await (await post(cookie, { name: 'Z' })).json()) as ExerciseDto;
+    const patch = await app.request(
+      `/api/exercises/${target.id}`,
+      {
+        method: 'PATCH',
+        headers: { Cookie: cookie, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ canonicalExerciseId: other.id }),
+      },
+      env,
+    );
+    expect(patch.status).toBe(400);
+
+    // Self-link → rifiutato.
+    const selfLink = await app.request(
+      `/api/exercises/${target.id}`,
+      {
+        method: 'PATCH',
+        headers: { Cookie: cookie, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ canonicalExerciseId: target.id }),
+      },
+      env,
+    );
+    expect(selfLink.status).toBe(400);
   });
 
   it('isola gli esercizi custom tra utenti', async () => {

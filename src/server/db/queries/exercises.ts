@@ -32,8 +32,10 @@ export async function listExercises(
     conditions.push(eq(exercises.equipment, filters.equipment));
   }
   if (filters.search) {
-    const term = `%${filters.search.toLowerCase()}%`;
-    conditions.push(sql`lower(${exercises.name}) like ${term}`);
+    // Escape dei metacaratteri LIKE (`%`, `_`, `\`) → ricerca per sottostringa letterale.
+    const escaped = filters.search.toLowerCase().replace(/[\\%_]/g, (ch) => `\\${ch}`);
+    const term = `%${escaped}%`;
+    conditions.push(sql`lower(${exercises.name}) like ${term} escape '\\'`);
   }
 
   const rows = await db
@@ -45,14 +47,16 @@ export async function listExercises(
   return rows.map(toDto);
 }
 
-/** True se l'esercizio è visibile all'utente (globale o suo custom). */
-async function isVisible(db: Db, userId: string, exerciseId: string): Promise<boolean> {
+/**
+ * True se l'esercizio è una voce canonica valida: deve appartenere al **catalogo globale**
+ * (user_id NULL). Enforce al confine il vincolo "collega a una voce di catalogo" (SPEC §5):
+ * niente link custom→custom né cicli.
+ */
+async function isCanonicalTarget(db: Db, exerciseId: string): Promise<boolean> {
   const [row] = await db
     .select({ id: exercises.id })
     .from(exercises)
-    .where(
-      and(eq(exercises.id, exerciseId), or(isNull(exercises.userId), eq(exercises.userId, userId))),
-    );
+    .where(and(eq(exercises.id, exerciseId), isNull(exercises.userId)));
   return row !== undefined;
 }
 
@@ -67,7 +71,7 @@ export async function createCustomExercise(
   input: CreateExerciseInput,
 ): Promise<CreateExerciseResult> {
   const canonicalId = input.canonicalExerciseId ?? null;
-  if (canonicalId !== null && !(await isVisible(db, userId, canonicalId))) {
+  if (canonicalId !== null && !(await isCanonicalTarget(db, canonicalId))) {
     return { ok: false, error: 'invalid_canonical' };
   }
 
@@ -107,11 +111,9 @@ export async function updateExercise(
   if (!owned) return { ok: false, error: 'not_found' };
 
   const canonicalId = input.canonicalExerciseId;
-  if (canonicalId !== null) {
-    // La canonica non può essere l'esercizio stesso e deve essere visibile.
-    if (canonicalId === exerciseId || !(await isVisible(db, userId, canonicalId))) {
-      return { ok: false, error: 'invalid_canonical' };
-    }
+  // La canonica deve essere una voce del catalogo globale (esclude self-link e cicli).
+  if (canonicalId !== null && !(await isCanonicalTarget(db, canonicalId))) {
+    return { ok: false, error: 'invalid_canonical' };
   }
 
   const [row] = await db
@@ -119,6 +121,9 @@ export async function updateExercise(
     .set({ canonicalExerciseId: canonicalId })
     .where(eq(exercises.id, exerciseId))
     .returning();
+
+  // La riga potrebbe sparire tra il controllo di proprietà e l'update (es. delete concorrente).
+  if (!row) return { ok: false, error: 'not_found' };
 
   return { ok: true, exercise: toDto(row) };
 }
