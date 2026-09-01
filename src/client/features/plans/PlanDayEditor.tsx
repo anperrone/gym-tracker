@@ -26,14 +26,20 @@ export function PlanDayEditor({ day, mutations }: { day: PlanDayDto; mutations: 
     e.preventDefault();
     const name = freeText.trim();
     if (name === '') return;
-    // Crea l'esercizio custom (testo libero) e lo aggiunge subito al giorno.
+    // Crea l'esercizio custom (testo libero) e lo aggiunge al giorno; chiude solo se l'aggiunta riesce.
     createExercise.mutate(
       { name, equipment: 'other' },
       {
         onSuccess: (ex) => {
-          mutations.addExercise.mutate({ dayId: day.id, input: { exerciseId: ex.id } });
-          setFreeText('');
-          setAdding(false);
+          mutations.addExercise.mutate(
+            { dayId: day.id, input: { exerciseId: ex.id } },
+            {
+              onSuccess: () => {
+                setFreeText('');
+                setAdding(false);
+              },
+            },
+          );
         },
       },
     );
@@ -60,7 +66,7 @@ export function PlanDayEditor({ day, mutations }: { day: PlanDayDto; mutations: 
               key={ex.id}
               exercise={ex}
               onUpdate={(input) =>
-                mutations.updateExercise.mutate({ dayId: day.id, peId: ex.id, input })
+                mutations.updateExercise.mutateAsync({ dayId: day.id, peId: ex.id, input })
               }
               onDelete={() => mutations.deleteExercise.mutate({ dayId: day.id, peId: ex.id })}
             />

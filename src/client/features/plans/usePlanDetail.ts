@@ -12,6 +12,8 @@ export function usePlanDetail(id: string) {
     queryKey: planKeys.detail(id),
     queryFn: () => api.fetchPlanDetail(id),
     enabled: id !== '',
+    // Il builder ha input controllati editabili: un refetch al focus li sovrascriverebbe.
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -31,9 +33,6 @@ function useDetailMutation<TArgs>(planId: string, fn: (args: TArgs) => Promise<P
 export function usePlanMutations(planId: string) {
   return {
     addDay: useDetailMutation(planId, (name: string) => api.addPlanDay(planId, { name })),
-    renameDay: useDetailMutation(planId, (args: { dayId: string; name: string }) =>
-      api.renamePlanDay(planId, args.dayId, args.name),
-    ),
     deleteDay: useDetailMutation(planId, (dayId: string) => api.deletePlanDay(planId, dayId)),
     addExercise: useDetailMutation(
       planId,

@@ -8,41 +8,39 @@ const field =
   'w-full rounded-md border border-border bg-surface px-2 py-1 text-sm text-text tabular-nums';
 const fieldLabel = 'block text-[10px] font-medium uppercase text-text-muted';
 
-/** Parsa un intero da input; '' → null (azzera), non numerico → undefined (invariato). */
-function parseIntOrNull(value: string): number | null | undefined {
+/** Parsa un numero da input; '' → null (azzera), non finito → undefined (input non valido). */
+function parseNumber(value: string, integer: boolean): number | null | undefined {
   const t = value.trim();
   if (t === '') return null;
-  const n = Number.parseInt(t, 10);
-  return Number.isFinite(n) ? n : undefined;
-}
-
-function parseFloatOrNull(value: string): number | null | undefined {
-  const t = value.trim();
-  if (t === '') return null;
-  const n = Number.parseFloat(t);
+  const n = integer ? Number.parseInt(t, 10) : Number.parseFloat(t);
   return Number.isFinite(n) ? n : undefined;
 }
 
 type Props = {
   exercise: PlanExerciseDto;
-  onUpdate: (input: UpdatePlanExerciseInput) => void;
+  onUpdate: (input: UpdatePlanExerciseInput) => Promise<unknown>;
   onDelete: () => void;
 };
 
-/** Riga di un esercizio pianificato: nome + target modificabili inline (persistiti su blur). */
+/**
+ * Riga di un esercizio pianificato: nome + target modificabili inline.
+ * Ogni campo si persiste su blur, ma solo se è cambiato e valido (una sola PATCH per campo,
+ * niente sovrascritture incrociate). Gli errori del server (valore fuori range) sono mostrati.
+ */
 export function PlanExerciseRow({ exercise, onUpdate, onDelete }: Props) {
   const [sets, setSets] = useState(exercise.targetSets?.toString() ?? '');
   const [reps, setReps] = useState(exercise.targetReps ?? '');
   const [weight, setWeight] = useState(exercise.targetWeight?.toString() ?? '');
   const [notes, setNotes] = useState(exercise.notes ?? '');
+  const [error, setError] = useState(false);
 
-  function persist() {
-    onUpdate({
-      targetSets: parseIntOrNull(sets),
-      targetReps: reps.trim() === '' ? null : reps.trim(),
-      targetWeight: parseFloatOrNull(weight),
-      notes: notes.trim() === '' ? null : notes.trim(),
-    });
+  /** Persiste un singolo campo se differisce dal valore corrente. `undefined` = input non valido. */
+  function commit(patch: UpdatePlanExerciseInput, current: unknown, next: unknown) {
+    if (next === undefined || next === current) return;
+    onUpdate(patch).then(
+      () => setError(false),
+      () => setError(true),
+    );
   }
 
   return (
@@ -66,9 +64,13 @@ export function PlanExerciseRow({ exercise, onUpdate, onDelete }: Props) {
             type="number"
             inputMode="numeric"
             min={1}
+            max={50}
             value={sets}
             onChange={(e) => setSets(e.target.value)}
-            onBlur={persist}
+            onBlur={() => {
+              const next = parseNumber(sets, true);
+              commit({ targetSets: next }, exercise.targetSets, next);
+            }}
             className={field}
           />
         </label>
@@ -78,9 +80,13 @@ export function PlanExerciseRow({ exercise, onUpdate, onDelete }: Props) {
             type="text"
             value={reps}
             onChange={(e) => setReps(e.target.value)}
-            onBlur={persist}
+            onBlur={() => {
+              const next = reps.trim() === '' ? null : reps.trim();
+              commit({ targetReps: next }, exercise.targetReps, next);
+            }}
             placeholder="8-12"
             className={field}
+            maxLength={40}
           />
         </label>
         <label className="block">
@@ -92,7 +98,10 @@ export function PlanExerciseRow({ exercise, onUpdate, onDelete }: Props) {
             min={0}
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
-            onBlur={persist}
+            onBlur={() => {
+              const next = parseNumber(weight, false);
+              commit({ targetWeight: next }, exercise.targetWeight, next);
+            }}
             className={field}
           />
         </label>
@@ -103,12 +112,19 @@ export function PlanExerciseRow({ exercise, onUpdate, onDelete }: Props) {
           type="text"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          onBlur={persist}
+          onBlur={() => {
+            const next = notes.trim() === '' ? null : notes.trim();
+            commit({ notes: next }, exercise.notes, next);
+          }}
           placeholder="Opzionale"
           className={field}
           maxLength={500}
         />
       </label>
+
+      {error && (
+        <p className="mt-2 text-xs text-negative">Valore non salvato: controlla il campo.</p>
+      )}
     </div>
   );
 }

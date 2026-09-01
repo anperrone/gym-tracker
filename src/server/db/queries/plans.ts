@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import type {
   CreatePlanDayInput,
   CreatePlanExerciseInput,
@@ -6,7 +6,6 @@ import type {
   PlanDetailDto,
   PlanExerciseDto,
   PlanSummaryDto,
-  UpdatePlanDayInput,
   UpdatePlanExerciseInput,
   UpdatePlanInput,
 } from '../../../shared/schemas';
@@ -161,6 +160,14 @@ export async function updatePlan(
   if (input.description !== undefined) patch.description = input.description ?? null;
   if (input.isActive !== undefined) patch.isActive = input.isActive;
 
+  // "Attiva" è esclusiva: attivando una scheda si disattivano le altre dell'utente.
+  if (input.isActive === true) {
+    await db
+      .update(workoutPlans)
+      .set({ isActive: false })
+      .where(and(eq(workoutPlans.userId, userId), ne(workoutPlans.id, planId)));
+  }
+
   const [row] = await db
     .update(workoutPlans)
     .set(patch)
@@ -236,24 +243,6 @@ async function dayInOwnedPlan(
       and(eq(planDays.id, dayId), eq(planDays.planId, planId), eq(workoutPlans.userId, userId)),
     );
   return row !== undefined;
-}
-
-export async function updatePlanDay(
-  db: Db,
-  userId: string,
-  planId: string,
-  dayId: string,
-  input: UpdatePlanDayInput,
-): Promise<PlanDetailDto | null> {
-  if (!(await dayInOwnedPlan(db, userId, planId, dayId))) return null;
-  const patch: Partial<typeof planDays.$inferInsert> = {};
-  if (input.name !== undefined) patch.name = input.name;
-  if (input.sortOrder !== undefined) patch.sortOrder = input.sortOrder;
-  if (Object.keys(patch).length > 0) {
-    await db.update(planDays).set(patch).where(eq(planDays.id, dayId));
-    await touchPlan(db, planId);
-  }
-  return getPlanDetail(db, userId, planId);
 }
 
 export async function deletePlanDay(

@@ -188,10 +188,6 @@ export function addPlanDay(planId: string, input: CreatePlanDayInput): Promise<P
   return sendJson(`/api/plans/${planId}/days`, 'POST', planDetailSchema, input);
 }
 
-export function renamePlanDay(planId: string, dayId: string, name: string): Promise<PlanDetailDto> {
-  return sendJson(`/api/plans/${planId}/days/${dayId}`, 'PATCH', planDetailSchema, { name });
-}
-
 export function deletePlanDay(planId: string, dayId: string): Promise<PlanDetailDto> {
   return sendJson(`/api/plans/${planId}/days/${dayId}`, 'DELETE', planDetailSchema);
 }

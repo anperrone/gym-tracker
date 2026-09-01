@@ -128,6 +128,20 @@ describe('API schede', () => {
     expect(list[0].dayCount).toBe(2);
   });
 
+  it("l'attivazione è esclusiva: una sola scheda attiva per utente", async () => {
+    const { cookie } = await seedUserWithSession();
+    const a = await createPlan(cookie, 'A');
+    const b = await createPlan(cookie, 'B');
+
+    await req(cookie, `/api/plans/${a.id}`, 'PATCH', { isActive: true });
+    await req(cookie, `/api/plans/${b.id}`, 'PATCH', { isActive: true });
+
+    const list = (await (await req(cookie, '/api/plans', 'GET')).json()) as PlanSummaryDto[];
+    const active = list.filter((p) => p.isActive);
+    expect(active).toHaveLength(1);
+    expect(active[0].id).toBe(b.id);
+  });
+
   it('isola le schede tra utenti', async () => {
     const a = await seedUserWithSession();
     const b = await seedUserWithSession();

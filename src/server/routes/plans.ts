@@ -4,7 +4,6 @@ import {
   createPlanDaySchema,
   createPlanExerciseSchema,
   createPlanSchema,
-  updatePlanDaySchema,
   updatePlanExerciseSchema,
   updatePlanSchema,
 } from '../../shared/schemas';
@@ -19,7 +18,6 @@ import {
   getPlanDetail,
   listPlans,
   updatePlan,
-  updatePlanDay,
   updatePlanExercise,
 } from '../db/queries/plans';
 import { requireAuth } from '../middleware/auth';
@@ -68,17 +66,6 @@ export const plans = new Hono<AppEnv>()
     );
     if (!detail) return c.json({ error: notFound }, 404);
     return c.json(detail, 201);
-  })
-  .patch('/:id/days/:dayId', zValidator('json', updatePlanDaySchema), async (c) => {
-    const detail = await updatePlanDay(
-      createDb(c.env.DB),
-      c.get('user').id,
-      c.req.param('id'),
-      c.req.param('dayId'),
-      c.req.valid('json'),
-    );
-    if (!detail) return c.json({ error: notFound }, 404);
-    return c.json(detail);
   })
   .delete('/:id/days/:dayId', async (c) => {
     const detail = await deletePlanDay(

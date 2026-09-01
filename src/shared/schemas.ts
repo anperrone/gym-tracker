@@ -189,12 +189,6 @@ export const createPlanDaySchema = z.object({
 });
 export type CreatePlanDayInput = z.infer<typeof createPlanDaySchema>;
 
-export const updatePlanDaySchema = z.object({
-  name: z.string().trim().min(1).max(120).optional(),
-  sortOrder: z.number().int().min(0).optional(),
-});
-export type UpdatePlanDayInput = z.infer<typeof updatePlanDaySchema>;
-
 /** Target di un esercizio pianificato (usato in create/update). */
 export const createPlanExerciseSchema = z.object({
   exerciseId: z.string().min(1),
