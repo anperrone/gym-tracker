@@ -1,17 +1,19 @@
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
+import { ChartIcon, ClipboardIcon, DumbbellIcon, RulerIcon } from './icons';
+import { ThemeToggle } from './ThemeToggle';
 
-type NavItem = { key: string; label: string; icon: string; to?: string };
+type IconComponent = (props: { className?: string }) => ReactNode;
+type NavItem = { key: string; label: string; Icon: IconComponent; to?: string };
 
 const NAV_ITEMS: NavItem[] = [
-  { key: 'measurements', label: 'Misure', icon: '📏', to: '/measurements' },
-  { key: 'plans', label: 'Schede', icon: '📋' },
-  { key: 'workout', label: 'Allena', icon: '🏋️' },
-  { key: 'progress', label: 'Progressi', icon: '📈' },
+  { key: 'measurements', label: 'Misure', Icon: RulerIcon, to: '/measurements' },
+  { key: 'plans', label: 'Schede', Icon: ClipboardIcon },
+  { key: 'workout', label: 'Allena', Icon: DumbbellIcon },
+  { key: 'progress', label: 'Progressi', Icon: ChartIcon },
 ];
 
-const itemClass =
-  'flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs text-slate-600';
+const itemBase = 'flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs';
 
 export function AppShell({
   children,
@@ -21,37 +23,41 @@ export function AppShell({
   headerRight?: ReactNode;
 }) {
   return (
-    <div className="min-h-dvh flex flex-col bg-slate-50 text-slate-900">
-      <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-3">
+    <div className="min-h-dvh flex flex-col bg-bg text-text">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-surface px-4 py-3">
         <h1 className="text-lg font-bold tracking-tight">Gym Tracker</h1>
-        {headerRight}
+        <div className="flex items-center gap-2">
+          {headerRight}
+          <ThemeToggle />
+        </div>
       </header>
 
       <main className="flex-1 px-4 py-4 pb-24">{children}</main>
 
       <nav
         aria-label="Navigazione principale"
-        className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-4 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]"
+        className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-4 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
       >
-        {NAV_ITEMS.map((item) =>
-          item.to ? (
+        {NAV_ITEMS.map(({ key, label, Icon, to }) =>
+          to ? (
             <Link
-              key={item.key}
-              to={item.to}
-              className={itemClass}
-              activeProps={{ className: `${itemClass} text-slate-900` }}
+              key={key}
+              to={to}
+              className={`${itemBase} text-text-muted`}
+              activeProps={{ className: `${itemBase} text-accent` }}
             >
-              <span aria-hidden="true" className="text-lg">
-                {item.icon}
-              </span>
-              {item.label}
+              <Icon className="h-5 w-5" />
+              {label}
             </Link>
           ) : (
-            <button key={item.key} type="button" disabled className={`${itemClass} opacity-40`}>
-              <span aria-hidden="true" className="text-lg">
-                {item.icon}
-              </span>
-              {item.label}
+            <button
+              key={key}
+              type="button"
+              disabled
+              className={`${itemBase} text-text-muted opacity-40`}
+            >
+              <Icon className="h-5 w-5" />
+              {label}
             </button>
           ),
         )}

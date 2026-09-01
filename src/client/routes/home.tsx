@@ -13,11 +13,11 @@ export function HomePage() {
 
   return (
     <section>
-      <h2 className="text-base font-semibold text-slate-700">
+      <h2 className="text-base font-semibold text-text">
         Ciao{user?.name ? `, ${user.name}` : ''} 👋
       </h2>
-      <p className="mt-1 text-sm text-slate-500">
-        Stato API: <span className="font-mono">{status}</span>
+      <p className="mt-1 text-sm text-text-muted">
+        Stato API: <span className="font-mono text-text">{status}</span>
       </p>
     </section>
   );

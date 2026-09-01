@@ -8,14 +8,14 @@ export function UserMenu() {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="max-w-[45vw] truncate text-sm text-slate-600">
+      <span className="max-w-[40vw] truncate text-sm text-text-muted">
         {user.name ?? user.email}
       </span>
       <button
         type="button"
         onClick={() => logout.mutate()}
         disabled={logout.isPending}
-        className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 disabled:opacity-50"
+        className="rounded-xl border border-border px-3 py-1.5 text-xs font-medium text-text transition-colors hover:bg-surface-2 disabled:opacity-50"
       >
         Esci
       </button>

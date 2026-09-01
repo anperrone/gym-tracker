@@ -1,7 +1,7 @@
 # Tasks: Gym Tracker
 
-> Fase 3 del workflow spec-driven. Riferimenti: `SPEC.md` (APPROVED), `PLAN.md` (APPROVED).
-> Stato: **APPROVED** (2026-09-01) — implementazione in corso
+> Fase 3 del workflow spec-driven. Riferimenti: `SPEC.md` (APPROVED), `PLAN.md` (APPROVED), `SPEC-ui-redesign.md`.
+> Stato: **APPROVED** (2026-09-01) — implementazione in corso. **Ripriorizzato 2026-09-01**: fatti M0/M1/M2; prossima priorità **MU (UI)**, poi gli allenamenti (M3→M5).
 
 Task discreti, ordinati per dipendenza. Ogni task: ≤ ~5 file, criteri di accettazione e passo di verifica espliciti. Dettagliati per **M0** e **M1**; M2–M9 restano a granularità alta e verranno scomposti al loro turno.
 
@@ -98,16 +98,58 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ---
 
-## M2–M9 — da dettagliare al proprio turno
+## M2 — Misure ✅ (branch `feat/m2-measurements`)
 
-Granularità alta ora; scomposizione in task al momento dell'implementazione (dopo M1).
+- [x] **T2.1** schema `measurement_types/entries/values` + seed 9 metriche default (migrazione `0001`) + test
+- [x] **T2.2** API scoped per utente: GET tipi (default+custom), CRUD misurazioni (create con valori, storico) + Zod
+- [x] **T2.3** Frontend: pagina Misure, form inserimento (9 metriche), storico
+- [x] **T2.4** Grafico andamento (peso + circonferenze) con Recharts
+- [x] **T2.5** Test integrazione (isolamento per utente) + E2E
 
-- **M2 Misure** — su branch `feat/m2-measurements`:
-  - [x] **T2.1** schema `measurement_types/entries/values` + seed 9 metriche default (migrazione `0001`) + test
-  - [x] **T2.2** API scoped per utente: GET tipi (default+custom), CRUD misurazioni (create con valori, storico) + Zod
-  - [x] **T2.3** Frontend: pagina Misure, form inserimento (9 metriche), storico
-  - [x] **T2.4** Grafico andamento (peso + circonferenze) con Recharts
-  - [x] **T2.5** Test integrazione (isolamento per utente) + E2E
+---
+
+## MU — UI Redesign & Design System (priorità corrente)
+
+> Ripriorizzato 2026-09-01: la UI ha precedenza sugli allenamenti (M3→M5). Riferimento: `SPEC-ui-redesign.md`. Branch: `feat/ui-modern-redesign`. Ordine interno: token tema → fix grafico (bloccante) → primitive/overview → restyle schermate.
+
+- [x] **TU.1 — Design tokens & tema (dark/light) + toggle**
+  - Acceptance: token semantici (bg/surface/border/text/accent/positive/negative/chart-*) definiti **una sola volta** in `index.css` con variante `data-theme`; `useTheme` con default da `prefers-color-scheme`, toggle e persistenza `localStorage`; `ThemeToggle` accessibile
+  - Verify: unit `useTheme` (default sistema, toggle, persistenza); `npm run check` verde
+  - Files: `src/client/index.css`, `src/client/lib/theme.ts`, `src/client/components/ThemeToggle.tsx`, test
+
+- [x] **TU.2 — Fix grafico asse Y (bloccante) + arricchimento**
+  - Acceptance: `margin.left ≥ 0` e `YAxis width` adeguata → **etichette asse Y mai tagliate** a 320/390/desktop; unità fuori dai tick (`tickFormatter` numerico); area con gradiente accento + ultimo punto evidenziato; tooltip e stati loading/empty a tema; colori da `chartTheme.ts`
+  - Verify: unit su `tickFormatter`/dominio; E2E che le tick label dell'asse Y sono presenti e dentro il box (x non negativa); `npm run check` verde
+  - Files: `src/client/features/measurements/MeasurementChart.tsx`, `chartTheme.ts`, test, `e2e/measurements-chart.spec.ts`
+
+- [x] **TU.3 — Primitive UI (Card / StatTile / IconButton / icone SVG)**
+  - Acceptance: primitive a tema, `tabular-nums` sui valori; set icone SVG per nav/azioni (sostituisce le emoji); smoke test render
+  - Verify: test render primitive; `npm run check` verde
+  - Files: `src/client/components/Card.tsx`, `StatTile.tsx`, `IconButton.tsx`, `icons.tsx`, test
+
+- [x] **TU.4 — Restyle AppShell + Login**
+  - Acceptance: header + bottom-nav ridisegnati con token e icone SVG; stato attivo con accento; `ThemeToggle` nell'header; voci placeholder ancora `disabled` + `aria-label`; Login a tema (bottone Google coerente)
+  - Verify: `AppShell.test.tsx` aggiornato passa; `npm run check` verde
+  - Files: `src/client/components/AppShell.tsx`, `src/client/features/auth/LoginPage.tsx`, `AppShell.test.tsx`
+
+- [x] **TU.5 — Pagina Misure: stat overview + restyle form/storico**
+  - Acceptance: riga di **stat tiles** (ultimo valore + Δ vs precedente, colore **neutro** non giudicante) dai dati esistenti; stato vuoto a tema; `MeasurementsPage`, `MeasurementHistory`, `MeasurementForm` restyled a tema
+  - Verify: unit calcolo Δ; E2E overview mostra ultimo valore + Δ; `npm run check` verde
+  - Files: `src/client/features/measurements/StatOverview.tsx`, `MeasurementsPage.tsx`, `MeasurementHistory.tsx`, `MeasurementForm.tsx`, test
+
+- [x] **TU.6 — A11y + regressione E2E finale**
+  - Acceptance: contrasto **AA** su testo/accento in entrambi i temi; E2E completo (toggle tema persistito dopo reload + asse Y visibile) verde; bundle non peggiora sensibilmente (Recharts resta lazy)
+  - Verify: `npm run check` + `npm run test:e2e` verdi; check contrasto (axe/manuale)
+  - Files: `e2e/*.spec.ts`, eventuale nota in `docs/`
+
+**Checkpoint MU**: asse Y completo su tutte le viewport; tema dark/light con toggle persistito (default sistema); schermate restyled AA; `npm run check` + E2E verdi. Chiusura via PR verso `main`.
+
+---
+
+## Allenamenti & resto — da dettagliare al proprio turno
+
+> **Dopo MU.** Granularità alta ora; scomposizione in task al momento dell'implementazione. Catena allenamenti: **M3 → M4 → M5**.
+
 - **M3 Catalogo esercizi** — schema `exercises` + seed (Appendix A); API list/search/create-custom/link-canonical; picker UI.
 - **M4 Schede** — schema `workout_plans/plan_days/plan_exercises`; API CRUD; plan builder UI.
 - **M5 Log allenamento** — schema `workout_sessions/session_exercises/session_sets`; API upsert idempotente (`client_id`); UI logging peso variabile per serie.
@@ -120,4 +162,4 @@ Granularità alta ora; scomposizione in task al momento dell'implementazione (do
 
 ## Prossimo passo
 
-Dopo l'**approvazione** di questi task si passa alla **Fase 4 — Implement**: si parte da **T0.1** seguendo TDD e implementazione incrementale (un task alla volta, `npm run check` verde prima di procedere).
+Prossima implementazione: **MU — UI Redesign**, a partire da **TU.1** (token di tema) e **TU.2** (fix grafico, bloccante). Un task alla volta, TDD dove ha senso, `npm run check` verde prima di procedere; chiusura milestone via PR verso `main`. Gli **allenamenti** (M3 → M5) seguono a UI completata.

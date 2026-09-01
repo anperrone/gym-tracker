@@ -33,4 +33,9 @@ describe('<AppShell />', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Misure')).toBeInTheDocument();
   });
+
+  it('espone il toggle del tema', async () => {
+    renderInRouter(<AppShell>x</AppShell>);
+    expect(await screen.findByRole('button', { name: /tema/i })).toBeInTheDocument();
+  });
 });
