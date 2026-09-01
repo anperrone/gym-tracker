@@ -116,6 +116,11 @@
     "formatter": { "trailingCommas": "none" }
   },
 
+  "css": {
+    // Tailwind v4: riconosce @custom-variant, @theme, @apply, ecc.
+    "parser": { "tailwindDirectives": true }
+  },
+
   "overrides": [
     {
       "includes": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "tests/**", "e2e/**"],

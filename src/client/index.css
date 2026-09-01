@@ -1,1 +1,63 @@
 @import "tailwindcss";
+
+/* Variante `dark:` guidata da data-theme sul <html> (impostato da theme.ts / script anti-FOUC). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* --- Design tokens: unica fonte di verità dei colori (tema chiaro di default) --- */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f0f2f5;
+  --border: #e5e8ec;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --accent: #059669;
+  --accent-fg: #ffffff;
+  --positive: #059669;
+  --negative: #dc2626;
+
+  /* Grafici (letti da chartTheme.ts) */
+  --chart-line: var(--accent);
+  --chart-area: color-mix(in oklab, var(--accent) 20%, transparent);
+  --chart-grid: var(--border);
+
+  color-scheme: light;
+}
+
+/* --- Tema scuro --- */
+:root[data-theme="dark"] {
+  --bg: #0b0f14;
+  --surface: #11161d;
+  --surface-2: #171e27;
+  --border: #232c38;
+  --text: #e6edf3;
+  --text-muted: #8b96a5;
+  --accent: #34d399;
+  --accent-fg: #07130d;
+  --positive: #34d399;
+  --negative: #f87171;
+
+  --chart-area: color-mix(in oklab, var(--accent) 26%, transparent);
+
+  color-scheme: dark;
+}
+
+/* Espone i token come colori Tailwind (bg-bg, text-text, bg-accent, border-border, ...).
+   `inline` = le utility usano var() → il cambio tema a runtime è immediato. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+}
