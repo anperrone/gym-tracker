@@ -43,10 +43,8 @@ export const exercises = new Hono<AppEnv>()
       c.req.valid('json'),
     );
     if (!result.ok) {
-      return c.json(
-        { error: result.error === 'not_found' ? 'Non trovato' : 'Voce canonica non valida' },
-        result.error === 'not_found' ? 404 : 400,
-      );
+      if (result.error === 'not_found') return c.json({ error: 'Non trovato' }, 404);
+      return c.json({ error: 'Voce canonica non valida' }, 400);
     }
     return c.json(result.exercise);
   })

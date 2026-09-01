@@ -12,8 +12,9 @@ export function ExercisesPage() {
   const [search, setSearch] = useState('');
   const [equipment, setEquipment] = useState<Equipment | ''>('');
 
+  const trimmedSearch = search.trim();
   const filters: ExerciseFilters = {
-    ...(search.trim() ? { search: search.trim() } : {}),
+    ...(trimmedSearch ? { search: trimmedSearch } : {}),
     ...(equipment ? { equipment } : {}),
   };
 
