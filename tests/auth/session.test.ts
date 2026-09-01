@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { sha256Hex } from "../../src/server/auth/crypto";
 import { createSession, invalidateSession, validateSession } from "../../src/server/auth/session";
+import { SESSION_TTL_SECONDS } from "../../src/server/config";
 import { createDb, type Db } from "../../src/server/db/client";
 import { sessions, users } from "../../src/server/db/schema";
 
@@ -47,5 +48,19 @@ describe("modulo sessioni", () => {
   it("token inesistente → null", async () => {
     const db = createDb(env.DB);
     expect(await validateSession(db, "non-esiste")).toBeNull();
+  });
+
+  it("rinnova (sliding) una sessione oltre metà TTL", async () => {
+    const db = createDb(env.DB);
+    const userId = await seedUser(db);
+    const token = "renew-token";
+    const id = await sha256Hex(token);
+    // scadenza appena sotto metà TTL → deve essere rinnovata
+    const soon = new Date(Date.now() + (SESSION_TTL_SECONDS * 1000) / 2 - 60_000);
+    await db.insert(sessions).values({ id, userId, expiresAt: soon });
+
+    const result = await validateSession(db, token);
+    expect(result?.renewed).toBe(true);
+    expect(result?.session.expiresAt.getTime()).toBeGreaterThan(soon.getTime());
   });
 });
