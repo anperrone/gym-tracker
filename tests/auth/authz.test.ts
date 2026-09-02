@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import app from '../../src/server';
 
 /** Mocka le due chiamate outbound a Google (token + userinfo). */
-function mockGoogle(user: { sub: string; email: string }): void {
+function mockGoogle(user: { sub: string; email: string }, emailVerified = true): void {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: RequestInfo | URL) => {
@@ -15,13 +15,27 @@ function mockGoogle(user: { sub: string; email: string }): void {
       }
       if (url.startsWith('https://openidconnect.googleapis.com/v1/userinfo')) {
         return new Response(
-          JSON.stringify({ sub: user.sub, email: user.email, email_verified: true, name: 'Test' }),
+          JSON.stringify({
+            sub: user.sub,
+            email: user.email,
+            email_verified: emailVerified,
+            name: 'Test',
+          }),
           { headers: { 'content-type': 'application/json' } },
         );
       }
       throw new Error(`fetch non mockato: ${url}`);
     }),
   );
+}
+
+/** Avvia il login e ritorna state + cookie OAuth per costruire una callback. */
+async function startLogin(): Promise<{ state: string; oauthCookie: string }> {
+  const loginRes = await app.request('/auth/google/login', {}, env);
+  const location = loginRes.headers.get('location') ?? '';
+  const state = new URL(location).searchParams.get('state') ?? '';
+  const oauthCookie = getSetCookie(loginRes, 'google_oauth') ?? '';
+  return { state, oauthCookie };
 }
 
 afterEach(() => vi.unstubAllGlobals());
@@ -103,5 +117,45 @@ describe('autorizzazione e flusso auth', () => {
       env,
     );
     expect(res.status).toBe(400);
+  });
+
+  it('callback con scambio token fallito → 401', async () => {
+    const { state, oauthCookie } = await startLogin();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('errore', { status: 400 })),
+    );
+    const res = await app.request(
+      `/auth/google/callback?code=fake&state=${state}`,
+      { headers: { Cookie: `google_oauth=${oauthCookie}` } },
+      env,
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it('callback con email non verificata → 403', async () => {
+    const { state, oauthCookie } = await startLogin();
+    mockGoogle({ sub: 'g-unverified', email: 'unverified@example.com' }, false);
+    const res = await app.request(
+      `/auth/google/callback?code=fake&state=${state}`,
+      { headers: { Cookie: `google_oauth=${oauthCookie}` } },
+      env,
+    );
+    expect(res.status).toBe(403);
+  });
+
+  // Il seam `/auth/test-login` esiste solo nella build dev (E2E deterministici).
+  it.runIf(import.meta.env.DEV)('seam dev /auth/test-login crea una sessione admin', async () => {
+    const res = await app.request(
+      '/auth/test-login?email=seam@example.com&admin=1',
+      { method: 'POST' },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const session = getSetCookie(res, 'session');
+    const me = await app.request('/api/me', { headers: { Cookie: `session=${session}` } }, env);
+    const body = (await me.json()) as { email: string; role: string };
+    expect(body.email).toBe('seam@example.com');
+    expect(body.role).toBe('admin');
   });
 });

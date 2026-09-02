@@ -13,6 +13,24 @@ export default defineConfig(async () => {
 
   return {
     test: {
+      // Copertura: provider **istanbul** (instrumentazione al transform), l'unico
+      // che funziona dentro `workerd` — il provider v8 richiede `node:inspector`,
+      // non implementato dal pool-workers. Soglia ≥80% su logica server + shared.
+      coverage: {
+        provider: 'istanbul',
+        include: ['src/server/**', 'src/shared/**'],
+        exclude: [
+          '**/*.test.ts',
+          'src/server/types.ts', // solo tipi, nessun runtime
+        ],
+        thresholds: {
+          statements: 80,
+          branches: 80,
+          functions: 80,
+          lines: 80,
+        },
+        reporter: ['text-summary', 'html'],
+      },
       projects: [
         // Server / integrazione: worker reale (workerd) con binding D1.
         {
