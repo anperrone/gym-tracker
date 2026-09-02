@@ -150,12 +150,17 @@ export const adminUserSchema = z.object({
   name: z.string().nullable(),
   role: userRoleSchema,
   createdAt: z.string(), // ISO
+  disabledAt: z.string().nullable(), // ISO se disabilitato, altrimenti null
 });
 export type AdminUserDto = z.infer<typeof adminUserSchema>;
 
 /** Payload admin: cambia il ruolo di un utente. */
 export const updateUserRoleSchema = z.object({ role: userRoleSchema });
 export type UpdateUserRoleInput = z.infer<typeof updateUserRoleSchema>;
+
+/** Payload admin: abilita/disabilita un account. */
+export const setUserDisabledSchema = z.object({ disabled: z.boolean() });
+export type SetUserDisabledInput = z.infer<typeof setUserDisabledSchema>;
 
 // --- Schede / workout plans (M4) ---
 

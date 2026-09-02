@@ -13,10 +13,12 @@ import {
   updateExercise,
 } from '../db/queries/exercises';
 import { requireAuth } from '../middleware/auth';
+import { rateLimitMutations } from '../middleware/rateLimit';
 import type { AppEnv } from '../types';
 
 export const exercises = new Hono<AppEnv>()
   .use(requireAuth)
+  .use(rateLimitMutations)
   // Elenco: catalogo globale + custom dell'utente, con filtri opzionali.
   .get('/', zValidator('query', exerciseFiltersSchema), async (c) => {
     const rows = await listExercises(createDb(c.env.DB), c.get('user').id, c.req.valid('query'));

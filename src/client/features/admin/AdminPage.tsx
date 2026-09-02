@@ -11,6 +11,7 @@ import {
   useAdminUsers,
   useCreateAdminExercise,
   useDeleteAdminExercise,
+  useSetUserDisabled,
   useUpdateAdminExercise,
   useUpdateUserRole,
 } from './useAdmin';
@@ -168,7 +169,9 @@ function GlobalExerciseRow({ exercise }: { exercise: ExerciseDto }) {
 
 function UserRow({ user, isSelf }: { user: AdminUserDto; isSelf: boolean }) {
   const updateRole = useUpdateUserRole();
+  const setDisabled = useSetUserDisabled();
   const nextRole = user.role === 'admin' ? 'user' : 'admin';
+  const isDisabled = user.disabledAt !== null;
 
   return (
     <Card className="p-3">
@@ -180,19 +183,36 @@ function UserRow({ user, isSelf }: { user: AdminUserDto; isSelf: boolean }) {
             <span className="ml-2 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-medium uppercase text-accent">
               {user.role}
             </span>
+            {isDisabled && (
+              <span className="ml-2 rounded-full bg-negative/15 px-2 py-0.5 text-[10px] font-medium uppercase text-negative">
+                disabilitato
+              </span>
+            )}
           </p>
         </div>
-        <button
-          type="button"
-          disabled={isSelf || updateRole.isPending}
-          title={isSelf ? 'Non puoi cambiare il tuo ruolo' : undefined}
-          onClick={() => updateRole.mutate({ id: user.id, role: nextRole })}
-          className={`${ghostBtn} disabled:opacity-40`}
-        >
-          {nextRole === 'admin' ? 'Rendi admin' : 'Rendi utente'}
-        </button>
+        <div className="flex shrink-0 items-center gap-1">
+          <button
+            type="button"
+            disabled={isSelf || updateRole.isPending}
+            title={isSelf ? 'Non puoi cambiare il tuo ruolo' : undefined}
+            onClick={() => updateRole.mutate({ id: user.id, role: nextRole })}
+            className={`${ghostBtn} disabled:opacity-40`}
+          >
+            {nextRole === 'admin' ? 'Rendi admin' : 'Rendi utente'}
+          </button>
+          <button
+            type="button"
+            disabled={isSelf || setDisabled.isPending}
+            title={isSelf ? 'Non puoi disabilitare il tuo account' : undefined}
+            onClick={() => setDisabled.mutate({ id: user.id, disabled: !isDisabled })}
+            className={`${ghostBtn} disabled:opacity-40`}
+          >
+            {isDisabled ? 'Riabilita' : 'Disabilita'}
+          </button>
+        </div>
       </div>
       {updateRole.isError && <p className={`mt-2 ${errorText}`}>Ruolo non aggiornato.</p>}
+      {setDisabled.isError && <p className={`mt-2 ${errorText}`}>Stato account non aggiornato.</p>}
     </Card>
   );
 }

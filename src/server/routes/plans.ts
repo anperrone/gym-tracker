@@ -21,12 +21,14 @@ import {
   updatePlanExercise,
 } from '../db/queries/plans';
 import { requireAuth } from '../middleware/auth';
+import { rateLimitMutations } from '../middleware/rateLimit';
 import type { AppEnv } from '../types';
 
 const notFound = 'Non trovata';
 
 export const plans = new Hono<AppEnv>()
   .use(requireAuth)
+  .use(rateLimitMutations)
   // --- Scheda ---
   .get('/', async (c) => {
     const rows = await listPlans(createDb(c.env.DB), c.get('user').id);

@@ -25,5 +25,14 @@
       "database_id": "6451299f-f2e5-4f83-95bd-e3e631777c40",
       "migrations_dir": "migrations"
     }
+  ],
+  "kv_namespaces": [
+    {
+      // Contatori per il rate limiting (callback OAuth + mutation).
+      "binding": "RATE_LIMIT",
+      // Id del namespace KV remoto (da `wrangler kv namespace create RATE_LIMIT`).
+      // Per lo sviluppo `--local` l'id non deve essere reale.
+      "id": "2857dc8bb66f439d89b6d02931e01490"
+    }
   ]
 }

@@ -72,6 +72,7 @@ const users: AdminUserDto[] = [
     name: 'Admin',
     role: 'admin',
     createdAt: '2026-01-01T00:00:00.000Z',
+    disabledAt: null,
   },
   {
     id: 'user-1',
@@ -79,6 +80,7 @@ const users: AdminUserDto[] = [
     name: 'Mario',
     role: 'user',
     createdAt: '2026-01-02T00:00:00.000Z',
+    disabledAt: null,
   },
 ];
 
@@ -97,6 +99,19 @@ describe('<AdminPage />', () => {
     // Utenti.
     expect(screen.getByText('mario@example.com')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Rendi admin/i })).toBeInTheDocument();
+    // Controllo di disabilitazione account.
+    expect(screen.getAllByRole('button', { name: /Disabilita/i }).length).toBeGreaterThan(0);
+  });
+
+  it('segnala gli account disabilitati e offre la riabilitazione', async () => {
+    stubApi({
+      exercises: [],
+      users: [users[0], { ...users[1], disabledAt: '2026-02-01T00:00:00.000Z' }],
+    });
+    renderPage();
+    expect(await screen.findByText('mario@example.com')).toBeInTheDocument();
+    expect(screen.getByText('disabilitato')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Riabilita/i })).toBeInTheDocument();
   });
 
   it('mostra lo stato vuoto del catalogo', async () => {

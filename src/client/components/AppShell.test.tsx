@@ -49,4 +49,18 @@ describe('<AppShell />', () => {
     renderInRouter(<AppShell isAdmin>x</AppShell>);
     expect(await screen.findByText('Admin')).toBeInTheDocument();
   });
+
+  it('offre uno skip link verso il contenuto principale', async () => {
+    renderInRouter(<AppShell>x</AppShell>);
+    const skip = await screen.findByRole('link', { name: /salta al contenuto/i });
+    expect(skip).toHaveAttribute('href', '#main-content');
+  });
+
+  it('rende il contenuto principale focalizzabile via programma', async () => {
+    renderInRouter(<AppShell>contenuto</AppShell>);
+    await screen.findByText('contenuto');
+    const main = document.getElementById('main-content');
+    expect(main?.tagName).toBe('MAIN');
+    expect(main).toHaveAttribute('tabindex', '-1');
+  });
 });

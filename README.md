@@ -16,8 +16,12 @@ Questi passi si fanno sui provider esterni e sono **prerequisiti** sia per il ru
    ```bash
    npx wrangler d1 create gym-tracker-db
    ```
-2. **API token** — crea un token con template *Edit Cloudflare Workers* (permessi *Workers Scripts:Edit* e *D1:Edit*).
-3. **Account ID** — dalla dashboard Cloudflare (Workers & Pages → Overview).
+2. **Crea il namespace KV** (rate limiting) e copia l'`id` restituito dentro `wrangler.jsonc` (`kv_namespaces[0].id`), sostituendo il placeholder:
+   ```bash
+   npx wrangler kv namespace create RATE_LIMIT
+   ```
+3. **API token** — crea un token con template *Edit Cloudflare Workers* (permessi *Workers Scripts:Edit*, *D1:Edit* e *Workers KV Storage:Edit*).
+4. **Account ID** — dalla dashboard Cloudflare (Workers & Pages → Overview).
 
 ### Google (OAuth 2.0)
 

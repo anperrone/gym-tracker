@@ -1,5 +1,5 @@
-import { Link } from '@tanstack/react-router';
-import type { ReactNode } from 'react';
+import { Link, useRouterState } from '@tanstack/react-router';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { ChartIcon, ClipboardIcon, DumbbellIcon, ListIcon, RulerIcon, ShieldIcon } from './icons';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -29,8 +29,30 @@ export function AppShell({
   isAdmin?: boolean;
 }) {
   const navItems = isAdmin ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS;
+
+  // A ogni cambio rotta sposta il focus sul contenuto principale: gli utenti da
+  // tastiera/screen reader ripartono dalla nuova pagina invece che dal link cliccato.
+  // Confrontando col percorso precedente si salta il primo render (nessun cambio),
+  // così non si ruba il focus iniziale (es. login/autofocus).
+  const mainRef = useRef<HTMLElement>(null);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const previousPath = useRef(pathname);
+  useEffect(() => {
+    if (previousPath.current !== pathname) {
+      previousPath.current = pathname;
+      mainRef.current?.focus();
+    }
+  }, [pathname]);
+
   return (
     <div className="min-h-dvh flex flex-col bg-bg text-text">
+      {/* Skip link: primo elemento focalizzabile, visibile solo con focus da tastiera. */}
+      <a
+        href="#main-content"
+        className="sr-only rounded-lg bg-accent px-4 py-2 font-medium text-accent-fg focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-20"
+      >
+        Salta al contenuto
+      </a>
       <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-surface px-4 py-3">
         <h1 className="text-lg font-bold tracking-tight">Gym Tracker</h1>
         <div className="flex items-center gap-2">
@@ -39,7 +61,14 @@ export function AppShell({
         </div>
       </header>
 
-      <main className="flex-1 px-4 py-4 pb-24">{children}</main>
+      <main
+        id="main-content"
+        ref={mainRef}
+        tabIndex={-1}
+        className="flex-1 px-4 py-4 pb-24 outline-none"
+      >
+        {children}
+      </main>
 
       <nav
         aria-label="Navigazione principale"

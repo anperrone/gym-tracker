@@ -21,12 +21,14 @@ import {
   updateSet,
 } from '../db/queries/workouts';
 import { requireAuth } from '../middleware/auth';
+import { rateLimitMutations } from '../middleware/rateLimit';
 import type { AppEnv } from '../types';
 
 const notFound = 'Non trovata';
 
 export const sessions = new Hono<AppEnv>()
   .use(requireAuth)
+  .use(rateLimitMutations)
   // --- Sessione ---
   .get('/', async (c) => {
     const rows = await listSessions(createDb(c.env.DB), c.get('user').id);

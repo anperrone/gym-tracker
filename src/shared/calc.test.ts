@@ -23,4 +23,9 @@ describe('calcoli derivati', () => {
     expect(roundTo(133.35, 1)).toBe(133.4);
     expect(roundTo(133.3333, 0)).toBe(133);
   });
+
+  it('roundTo usa 1 decimale di default', () => {
+    expect(roundTo(133.3333)).toBe(133.3);
+    expect(roundTo(0.05)).toBe(0.1);
+  });
 });

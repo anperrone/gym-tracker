@@ -1,6 +1,6 @@
 import { createMiddleware } from 'hono/factory';
 import { getSessionToken, setSessionCookie } from '../auth/cookies';
-import { validateSession } from '../auth/session';
+import { invalidateSession, validateSession } from '../auth/session';
 import { createDb } from '../db/client';
 import type { AppEnv } from '../types';
 
@@ -14,9 +14,16 @@ export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
     return c.json({ error: 'Non autenticato' }, 401);
   }
 
-  const result = await validateSession(createDb(c.env.DB), token);
+  const db = createDb(c.env.DB);
+  const result = await validateSession(db, token);
   if (!result) {
     return c.json({ error: 'Non autenticato' }, 401);
+  }
+
+  // Account disabilitato dall'admin: revoca la sessione e nega l'accesso.
+  if (result.user.disabledAt) {
+    await invalidateSession(db, token);
+    return c.json({ error: 'Account disabilitato' }, 403);
   }
 
   if (result.renewed) {

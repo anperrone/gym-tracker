@@ -47,3 +47,12 @@ export function useUpdateUserRole() {
     onSuccess: () => qc.invalidateQueries({ queryKey: adminKeys.users }),
   });
 }
+
+export function useSetUserDisabled() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { id: string; disabled: boolean }) =>
+      api.setUserDisabled(args.id, args.disabled),
+    onSuccess: () => qc.invalidateQueries({ queryKey: adminKeys.users }),
+  });
+}

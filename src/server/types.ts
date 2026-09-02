@@ -8,6 +8,8 @@ import type { Session, User } from './db/schema';
 export interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
+  /** Contatori per il rate limiting (callback OAuth + mutation). */
+  RATE_LIMIT: KVNamespace;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   GOOGLE_REDIRECT_URI: string;

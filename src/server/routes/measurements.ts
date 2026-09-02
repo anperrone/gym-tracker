@@ -10,10 +10,12 @@ import {
   listMeasurementTypes,
 } from '../db/queries/measurements';
 import { requireAuth } from '../middleware/auth';
+import { rateLimitMutations } from '../middleware/rateLimit';
 import type { AppEnv } from '../types';
 
 export const measurements = new Hono<AppEnv>()
   .use(requireAuth)
+  .use(rateLimitMutations)
   // Tipi di metrica (default + custom dell'utente)
   .get('/types', async (c) => {
     const types = await listMeasurementTypes(createDb(c.env.DB), c.get('user').id);

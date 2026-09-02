@@ -1,4 +1,5 @@
 import { env } from 'cloudflare:test';
+import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import app from '../../src/server';
 import { createSession } from '../../src/server/auth/session';
@@ -53,7 +54,14 @@ describe('API admin — utenti/ruoli', () => {
     expect(u?.email).toBe('user@example.com');
     expect(u?.role).toBe('user');
     // Il DTO espone solo campi non personali: niente misure/allenamenti.
-    expect(Object.keys(u ?? {}).sort()).toEqual(['createdAt', 'email', 'id', 'name', 'role']);
+    expect(Object.keys(u ?? {}).sort()).toEqual([
+      'createdAt',
+      'disabledAt',
+      'email',
+      'id',
+      'name',
+      'role',
+    ]);
   });
 
   it('PATCH /users/:id promuove un utente ad admin', async () => {
@@ -128,5 +136,93 @@ describe('API admin — utenti/ruoli', () => {
     // Non esiste alcuna rotta admin per i dati personali di un utente.
     expect((await adminReq(`/users/${user.userId}/measurements`, admin.cookie)).status).toBe(404);
     expect((await adminReq(`/users/${user.userId}/sessions`, admin.cookie)).status).toBe(404);
+  });
+});
+
+describe('API admin — disabilitazione account', () => {
+  it("disabilita un utente: il DTO lo segna e la sessione dell'utente è revocata", async () => {
+    const admin = await seedUser('admin');
+    const user = await seedUser('user');
+
+    // Prima è attivo.
+    expect((await app.request('/api/me', { headers: { Cookie: user.cookie } }, env)).status).toBe(
+      200,
+    );
+
+    const res = await adminReq(`/users/${user.userId}/disabled`, admin.cookie, {
+      method: 'PATCH',
+      body: JSON.stringify({ disabled: true }),
+    });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as AdminUserDto).disabledAt).not.toBeNull();
+
+    // La sessione esistente non è più valida (revocata o bloccata).
+    const blocked = await app.request('/api/me', { headers: { Cookie: user.cookie } }, env);
+    expect([401, 403]).toContain(blocked.status);
+  });
+
+  it('requireAuth blocca (403) un utente disabilitato e ne invalida la sessione', async () => {
+    const user = await seedUser('user');
+    // Disabilita direttamente nel DB mantenendo la sessione, per colpire il middleware.
+    const db = createDb(env.DB);
+    await db.update(users).set({ disabledAt: new Date() }).where(eq(users.id, user.userId));
+
+    const first = await app.request('/api/me', { headers: { Cookie: user.cookie } }, env);
+    expect(first.status).toBe(403);
+
+    // La sessione è stata invalidata: ora la stessa richiesta è 401 (sessione assente).
+    const second = await app.request('/api/me', { headers: { Cookie: user.cookie } }, env);
+    expect(second.status).toBe(401);
+  });
+
+  it('riabilita un utente: con una nuova sessione torna ad accedere', async () => {
+    const admin = await seedUser('admin');
+    const user = await seedUser('user');
+
+    await adminReq(`/users/${user.userId}/disabled`, admin.cookie, {
+      method: 'PATCH',
+      body: JSON.stringify({ disabled: true }),
+    });
+    const res = await adminReq(`/users/${user.userId}/disabled`, admin.cookie, {
+      method: 'PATCH',
+      body: JSON.stringify({ disabled: false }),
+    });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as AdminUserDto).disabledAt).toBeNull();
+
+    // Nuova sessione (la precedente era stata revocata) → accesso ok.
+    const token = await createSession(createDb(env.DB), user.userId);
+    const ok = await app.request('/api/me', { headers: { Cookie: `session=${token}` } }, env);
+    expect(ok.status).toBe(200);
+  });
+
+  it('un admin non può disabilitare sé stesso (409)', async () => {
+    const admin = await seedUser('admin');
+    const res = await adminReq(`/users/${admin.userId}/disabled`, admin.cookie, {
+      method: 'PATCH',
+      body: JSON.stringify({ disabled: true }),
+    });
+    expect(res.status).toBe(409);
+    // Resta operativo.
+    expect((await adminReq('/users', admin.cookie)).status).toBe(200);
+  });
+
+  it('nega la disabilitazione ai non-admin (403)', async () => {
+    const attacker = await seedUser('user');
+    const victim = await seedUser('user');
+    const res = await adminReq(`/users/${victim.userId}/disabled`, attacker.cookie, {
+      method: 'PATCH',
+      body: JSON.stringify({ disabled: true }),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('disabilitazione di un utente inesistente → 404', async () => {
+    const admin = await seedUser('admin');
+    const res = await adminReq('/users/non-esiste/disabled', admin.cookie, {
+      method: 'PATCH',
+      body: JSON.stringify({ disabled: true }),
+    });
+    expect(res.status).toBe(404);
   });
 });
