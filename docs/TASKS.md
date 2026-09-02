@@ -1,7 +1,7 @@
 # Tasks: Gym Tracker
 
 > Fase 3 del workflow spec-driven. Riferimenti: `SPEC.md` (APPROVED), `PLAN.md` (APPROVED), `SPEC-ui-redesign.md`.
-> Stato: **APPROVED** (2026-09-01) — implementazione in corso. **Ripriorizzato 2026-09-01**: fatti M0/M1/M2/**MU**/**M3**/**M4**/**M5**/**M6**/**M7**; in corso **M8 (Admin)**.
+> Stato: **APPROVED** (2026-09-01) — implementazione in corso. **Ripriorizzato 2026-09-01**: fatti M0/M1/M2/**MU**/**M3**/**M4**/**M5**/**M6**/**M7**/**M8**; prossimo **M9 (Hardening & deploy)**.
 
 Task discreti, ordinati per dipendenza. Ogni task: ≤ ~5 file, criteri di accettazione e passo di verifica espliciti. Dettagliati per **M0** e **M1**; M2–M9 restano a granularità alta e verranno scomposti al loro turno.
 
@@ -321,7 +321,7 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ---
 
-## M8 — Admin (pannello tecnico) 🚧 (branch `feat/m8-admin`)
+## M8 — Admin (pannello tecnico) ✅ (branch `feat/m8-admin`)
 
 > Avviato 2026-09-02 dopo M7. Branch: `feat/m8-admin`. Riferimento: `SPEC.md` §1 (persona **Admin**), §8 (Boundaries: *admin non legge dati personali*), §10 (criterio: *admin non può leggere misure/allenamenti; può gestire il catalogo globale*). L'admin cura il **catalogo esercizi globale** (`user_id` NULL) e gestisce **utenti/ruoli**; **non** ha accesso ai dati personali (misure/allenamenti). **Nessuna modifica di schema**: `role` e `user_id` NULL esistono già. La **disabilitazione account** richiede una colonna nuova → **rimandata a M9** (ask-first su schema). Ordine interno: middleware → API catalogo → API utenti/ruoli → frontend → E2E.
 
@@ -345,7 +345,7 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
   - Verify: test render/hook; `npm run check` verde
   - Files: `src/client/lib/api.ts`, `src/client/features/admin/useAdmin.ts`, `AdminPage.tsx`, `src/client/routes/admin.tsx`, `src/client/components/AppShell.tsx`, `src/client/router.tsx`
 
-- [ ] **T8.5 — E2E admin**
+- [x] **T8.5 — E2E admin**
   - Acceptance: E2E — admin aggiunge un esercizio al catalogo globale e cambia il ruolo di un utente; un utente standard non vede la voce Admin e riceve 403 sulle API admin
   - Verify: `npm run test:e2e` verde
   - Files: `e2e/admin.spec.ts`
@@ -363,4 +363,4 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ## Prossimo passo
 
-In corso: **M8 — Admin (pannello tecnico)**, a partire da **T8.1** (middleware `requireAdmin`). Un task alla volta, `npm run check` verde prima di procedere; chiusura milestone via PR verso `main`. Poi **M9 Hardening & deploy**.
+**M8 — Admin** completato (T8.1–T8.5): middleware `requireAdmin`, API catalogo globale + utenti/ruoli, pannello admin frontend, E2E. Chiusura via PR verso `main`. Prossima implementazione: **M9 — Hardening & deploy**.

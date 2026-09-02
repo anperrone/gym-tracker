@@ -80,11 +80,13 @@ export const auth = new Hono<AppEnv>()
 if (import.meta.env.DEV) {
   auth.post('/test-login', async (c) => {
     const email = c.req.query('email') ?? 'e2e@example.com';
+    // `admin=1` forza il ruolo admin (E2E deterministici, indipendenti da ADMIN_EMAILS).
+    const forceAdmin = c.req.query('admin') === '1';
     const db = createDb(c.env.DB);
     const user = await upsertUserFromGoogle(
       db,
       { sub: `e2e-${email}`, email, emailVerified: true, name: 'E2E', picture: null },
-      isAdminEmail(c.env, email),
+      forceAdmin || isAdminEmail(c.env, email),
     );
     const token = await createSession(db, user.id);
     setSessionCookie(c, token);
