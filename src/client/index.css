@@ -55,3 +55,16 @@ body {
   background-color: var(--bg);
   color: var(--text);
 }
+
+/* Focus da tastiera visibile e coerente in entrambi i temi (keyboard nav).
+   `:where()` mantiene specificità 0 → i componenti possono sovrascrivere. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* I container focalizzati via programma (es. <main> al cambio rotta) non
+   mostrano l'outline: il focus è per screen reader, non un target cliccato. */
+:where([tabindex="-1"]):focus {
+  outline: none;
+}

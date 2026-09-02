@@ -363,15 +363,17 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
   - Verify: test render (path sconosciuto → not-found; error boundary mostra fallback); `npm run check` verde
   - Files: `src/client/router.tsx`, `src/client/components/ErrorState.tsx`, `src/server/index.ts`, test
 
-- [ ] **T9.2 — Coverage gate ≥ 80% (server logic + `shared/`)**
+- [x] **T9.2 — Coverage gate ≥ 80% (server logic + `shared/`)**
   - Acceptance: `vitest` con soglie di copertura (≥80% su `src/server/**` di logica e `src/shared/**`); `npm run check`/CI falliscono sotto soglia; colmare eventuali gap con test
   - Verify: `npm run test:coverage` sopra soglia; CI aggiornata; `npm run check` verde
   - Files: `vitest.config.ts`, `.github/workflows/ci.yml`, eventuali test aggiunti
+  - **Done**: provider **istanbul** (l'unico che funziona in `workerd`; v8 richiede `node:inspector`, assente nel pool-workers). Soglie 80% su statements/branches/functions/lines. Coverage attuale: stmts 91.6% · branch 80.8% · funcs 89.3% · lines 93.8%. `check` ora esegue `test:coverage`; report caricato come artifact CI. Gap colmati: ciclo serie/esercizi + 404, callback OAuth (401/403/seam dev), default param roundTo.
 
-- [ ] **T9.3 — A11y hardening**
+- [x] **T9.3 — A11y hardening**
   - Acceptance: focus management sulle rotte, `aria-*` mancanti, target touch ≥44px verificati, keyboard nav; contrasto AA già in MU; opz. check axe in un E2E
   - Verify: audit (axe/manuale); `npm run check` (+ eventuale E2E) verde
   - Files: componenti UI interessati, eventuale `e2e/a11y.spec.ts`
+  - **Done**: skip link + `<main id="main-content" tabindex=-1>` con focus management al cambio rotta; target touch `IconButton` 36→44px; `:focus-visible` coerente in entrambi i temi; `aria-current` sui link nav (nativo TanStack). E2E `a11y.spec.ts` con **axe** (WCAG 2 A/AA): **0 violazioni** su login + 6 pagine autenticate; skip link primo focus → `main`.
 
 - [ ] **T9.4 — Rate limiting (KV)** ⚠️ *ask-first: nuovo binding KV*
   - Acceptance: throttle sugli endpoint sensibili (callback OAuth, mutation) con contatore su **KV**; risposta `429` oltre soglia; scoping per IP/utente
