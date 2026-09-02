@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import app from '../../src/server';
 import { createSession } from '../../src/server/auth/session';
 import { createDb } from '../../src/server/db/client';
-import { users } from '../../src/server/db/schema';
+import { planDays, planExercises, users, workoutPlans } from '../../src/server/db/schema';
 import type { ExerciseDto } from '../../src/shared/schemas';
 
 async function seedUser(role: 'user' | 'admin'): Promise<{ userId: string; cookie: string }> {
@@ -113,6 +113,35 @@ describe('API admin — catalogo globale', () => {
 
     const list = (await (await adminReq('/exercises', admin.cookie)).json()) as ExerciseDto[];
     expect(list.some((e) => e.id === created.id)).toBe(false);
+  });
+
+  it('rifiuta di eliminare un esercizio globale in uso in una scheda (409)', async () => {
+    const admin = await seedUser('admin');
+    const user = await seedUser('user');
+    const ex = (await (
+      await adminReq('/exercises', admin.cookie, {
+        method: 'POST',
+        body: JSON.stringify({ name: 'In Uso', equipment: 'machine' }),
+      })
+    ).json()) as ExerciseDto;
+
+    // Un utente lo inserisce in una propria scheda.
+    const db = createDb(env.DB);
+    const planId = crypto.randomUUID();
+    const dayId = crypto.randomUUID();
+    await db.insert(workoutPlans).values({ id: planId, userId: user.userId, name: 'Scheda' });
+    await db.insert(planDays).values({ id: dayId, planId, name: 'Giorno A' });
+    await db
+      .insert(planExercises)
+      .values({ id: crypto.randomUUID(), planDayId: dayId, exerciseId: ex.id });
+
+    // L'admin non può eliminarlo (cascaderebbe sulla scheda dell'utente).
+    const del = await adminReq(`/exercises/${ex.id}`, admin.cookie, { method: 'DELETE' });
+    expect(del.status).toBe(409);
+
+    // Resta nel catalogo globale.
+    const list = (await (await adminReq('/exercises', admin.cookie)).json()) as ExerciseDto[];
+    expect(list.some((e) => e.id === ex.id)).toBe(true);
   });
 
   it('non tocca gli esercizi custom degli utenti (404)', async () => {

@@ -81,6 +81,17 @@ describe('API admin — utenti/ruoli', () => {
     expect(res.status).toBe(400);
   });
 
+  it('un admin non può cambiare il proprio ruolo (409)', async () => {
+    const admin = await seedUser('admin');
+    const res = await adminReq(`/users/${admin.userId}`, admin.cookie, {
+      method: 'PATCH',
+      body: JSON.stringify({ role: 'user' }),
+    });
+    expect(res.status).toBe(409);
+    // Resta admin: continua ad accedere alle rotte admin.
+    expect((await adminReq('/users', admin.cookie)).status).toBe(200);
+  });
+
   it('PATCH su utente inesistente → 404', async () => {
     const admin = await seedUser('admin');
     const res = await adminReq('/users/non-esiste', admin.cookie, {

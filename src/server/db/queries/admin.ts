@@ -7,18 +7,8 @@ import type {
   UpdateUserRoleInput,
 } from '../../../shared/schemas';
 import type { Db } from '../client';
-import { exercises, users } from '../schema';
-
-function toDto(row: typeof exercises.$inferSelect): ExerciseDto {
-  return {
-    id: row.id,
-    name: row.name,
-    muscleGroup: row.muscleGroup,
-    equipment: row.equipment,
-    isCustom: row.isCustom,
-    canonicalExerciseId: row.canonicalExerciseId,
-  };
-}
+import { exercises, planExercises, users } from '../schema';
+import { exerciseToDto } from './exercises';
 
 /** Elenca **solo** il catalogo globale (user_id NULL); i custom degli utenti sono esclusi. */
 export async function listGlobalExercises(db: Db): Promise<ExerciseDto[]> {
@@ -27,7 +17,7 @@ export async function listGlobalExercises(db: Db): Promise<ExerciseDto[]> {
     .from(exercises)
     .where(isNull(exercises.userId))
     .orderBy(asc(exercises.name));
-  return rows.map(toDto);
+  return rows.map(exerciseToDto);
 }
 
 /** Crea un esercizio del catalogo globale (user_id NULL, non custom). */
@@ -47,7 +37,7 @@ export async function createGlobalExercise(
       canonicalExerciseId: null,
     })
     .returning();
-  return toDto(row);
+  return exerciseToDto(row);
 }
 
 export type UpdateGlobalExerciseResult =
@@ -70,23 +60,41 @@ export async function updateGlobalExercise(
   // Patch vuota: nessun campo da aggiornare → ritorna la voce corrente (se globale).
   if (Object.keys(set).length === 0) {
     const [row] = await db.select().from(exercises).where(onlyGlobal);
-    return row ? { ok: true, exercise: toDto(row) } : { ok: false, error: 'not_found' };
+    return row ? { ok: true, exercise: exerciseToDto(row) } : { ok: false, error: 'not_found' };
   }
 
   const [row] = await db.update(exercises).set(set).where(onlyGlobal).returning();
-  return row ? { ok: true, exercise: toDto(row) } : { ok: false, error: 'not_found' };
+  return row ? { ok: true, exercise: exerciseToDto(row) } : { ok: false, error: 'not_found' };
 }
 
-/** Elimina un esercizio globale. False se inesistente o **custom** di un utente. */
-export async function deleteGlobalExercise(db: Db, exerciseId: string): Promise<boolean> {
+export type DeleteGlobalExerciseResult =
+  | { ok: true }
+  | { ok: false; error: 'not_found' | 'in_use'; planCount?: number };
+
+/**
+ * Elimina un esercizio globale. Rifiuta se inesistente/custom (`not_found`) o se è **usato in
+ * una o più schede** (`in_use`): `plan_exercises.exercise_id` ha FK ON DELETE cascade, quindi
+ * eliminarlo cancellerebbe silenziosamente righe di schede di altri utenti. Le sessioni svolte
+ * non bloccano: conservano uno snapshot del nome (exercise_id → NULL), la storia resta.
+ */
+export async function deleteGlobalExercise(
+  db: Db,
+  exerciseId: string,
+): Promise<DeleteGlobalExerciseResult> {
   const [row] = await db
     .select({ id: exercises.id })
     .from(exercises)
     .where(and(eq(exercises.id, exerciseId), isNull(exercises.userId)));
-  if (!row) return false;
+  if (!row) return { ok: false, error: 'not_found' };
+
+  const usage = await db
+    .select({ id: planExercises.id })
+    .from(planExercises)
+    .where(eq(planExercises.exerciseId, exerciseId));
+  if (usage.length > 0) return { ok: false, error: 'in_use', planCount: usage.length };
 
   await db.delete(exercises).where(eq(exercises.id, exerciseId));
-  return true;
+  return { ok: true };
 }
 
 // --- Utenti/ruoli ---
@@ -109,14 +117,20 @@ export async function listUsers(db: Db): Promise<AdminUserDto[]> {
 
 export type UpdateUserRoleResult =
   | { ok: true; user: AdminUserDto }
-  | { ok: false; error: 'not_found' };
+  | { ok: false; error: 'not_found' | 'self_forbidden' };
 
-/** Cambia il ruolo di un utente (user/admin). */
+/**
+ * Cambia il ruolo di un utente (user/admin). Un admin **non** può cambiare il **proprio** ruolo
+ * (`self_forbidden`): impedisce un self-lockout e garantisce che resti sempre almeno un admin.
+ */
 export async function updateUserRole(
   db: Db,
+  actingUserId: string,
   userId: string,
   input: UpdateUserRoleInput,
 ): Promise<UpdateUserRoleResult> {
+  if (userId === actingUserId) return { ok: false, error: 'self_forbidden' };
+
   const [row] = await db
     .update(users)
     .set({ role: input.role, updatedAt: new Date() })

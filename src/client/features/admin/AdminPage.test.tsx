@@ -18,19 +18,28 @@ const adminMe: MeResponse = {
   role: 'admin',
 };
 
-function stubApi(exercises: ExerciseDto[], users: AdminUserDto[]) {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.includes('/api/me')) return new Response(JSON.stringify(adminMe), { status: 200 });
-      if (url.includes('/api/admin/exercises'))
-        return new Response(JSON.stringify(exercises), { status: 200 });
-      if (url.includes('/api/admin/users'))
-        return new Response(JSON.stringify(users), { status: 200 });
-      return new Response('null', { status: 404 });
-    }),
-  );
+type StubOptions = {
+  me?: MeResponse;
+  exercises?: ExerciseDto[];
+  users?: AdminUserDto[];
+  exercisesStatus?: number;
+};
+
+function stubApi(opts: StubOptions = {}) {
+  const me = opts.me ?? adminMe;
+  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes('/api/me')) return new Response(JSON.stringify(me), { status: 200 });
+    if (url.includes('/api/admin/exercises'))
+      return new Response(JSON.stringify(opts.exercises ?? []), {
+        status: opts.exercisesStatus ?? 200,
+      });
+    if (url.includes('/api/admin/users'))
+      return new Response(JSON.stringify(opts.users ?? []), { status: 200 });
+    return new Response('null', { status: 404 });
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
 }
 
 function renderPage() {
@@ -77,22 +86,37 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('<AdminPage />', () => {
   it('mostra catalogo globale, utenti e i controlli', async () => {
-    stubApi([panca], users);
+    stubApi({ exercises: [panca], users });
     renderPage();
 
     // Catalogo globale.
     expect(await screen.findByText('Panca Piana')).toBeInTheDocument();
     expect(screen.getByLabelText('Nome esercizio')).toBeInTheDocument();
+    expect(screen.getByLabelText('Gruppo muscolare')).toBeInTheDocument();
 
     // Utenti.
     expect(screen.getByText('mario@example.com')).toBeInTheDocument();
-    // Controllo per promuovere ad admin l'utente standard.
     expect(screen.getByRole('button', { name: /Rendi admin/i })).toBeInTheDocument();
   });
 
   it('mostra lo stato vuoto del catalogo', async () => {
-    stubApi([], [users[0]]);
+    stubApi({ exercises: [], users: [users[0]] });
     renderPage();
     expect(await screen.findByText(/Nessun esercizio nel catalogo/i)).toBeInTheDocument();
+  });
+
+  it('mostra un errore (non lo stato vuoto) quando la query fallisce', async () => {
+    stubApi({ exercisesStatus: 500, users: [users[0]] });
+    renderPage();
+    expect(await screen.findByText(/Impossibile caricare il catalogo/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Nessun esercizio nel catalogo/i)).not.toBeInTheDocument();
+  });
+
+  it('non chiama le API admin per un utente non-admin', async () => {
+    const fetchMock = stubApi({ me: { ...adminMe, role: 'user' } });
+    renderPage();
+    expect(await screen.findByText(/Accesso riservato/i)).toBeInTheDocument();
+    const called = fetchMock.mock.calls.map((c) => String(c[0]));
+    expect(called.some((u) => u.includes('/api/admin'))).toBe(false);
   });
 });

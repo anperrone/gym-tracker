@@ -43,10 +43,18 @@ export const admin = new Hono<AppEnv>()
     if (!result.ok) return c.json({ error: 'Non trovato' }, 404);
     return c.json(result.exercise);
   })
-  // Catalogo globale: elimina (solo voci globali).
+  // Catalogo globale: elimina (solo voci globali, se non usato in nessuna scheda).
   .delete('/exercises/:id', async (c) => {
-    const deleted = await deleteGlobalExercise(createDb(c.env.DB), c.req.param('id'));
-    if (!deleted) return c.json({ error: 'Non trovato' }, 404);
+    const result = await deleteGlobalExercise(createDb(c.env.DB), c.req.param('id'));
+    if (!result.ok) {
+      if (result.error === 'in_use') {
+        return c.json(
+          { error: 'Esercizio in uso in una o più schede', planCount: result.planCount },
+          409,
+        );
+      }
+      return c.json({ error: 'Non trovato' }, 404);
+    }
     return c.json({ ok: true });
   })
   // Utenti: elenco (senza dati personali).
@@ -54,9 +62,19 @@ export const admin = new Hono<AppEnv>()
     const rows = await listUsers(createDb(c.env.DB));
     return c.json(rows);
   })
-  // Utenti: cambia ruolo.
+  // Utenti: cambia ruolo (non il proprio → evita self-lockout).
   .patch('/users/:id', zValidator('json', updateUserRoleSchema), async (c) => {
-    const result = await updateUserRole(createDb(c.env.DB), c.req.param('id'), c.req.valid('json'));
-    if (!result.ok) return c.json({ error: 'Non trovato' }, 404);
+    const result = await updateUserRole(
+      createDb(c.env.DB),
+      c.get('user').id,
+      c.req.param('id'),
+      c.req.valid('json'),
+    );
+    if (!result.ok) {
+      if (result.error === 'self_forbidden') {
+        return c.json({ error: 'Non puoi cambiare il tuo ruolo' }, 409);
+      }
+      return c.json({ error: 'Non trovato' }, 404);
+    }
     return c.json(result.user);
   });
