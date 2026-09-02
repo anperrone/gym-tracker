@@ -1,11 +1,13 @@
 import { and, asc, eq, isNull } from 'drizzle-orm';
 import type {
+  AdminUserDto,
   CreateGlobalExerciseInput,
   ExerciseDto,
   UpdateGlobalExerciseInput,
+  UpdateUserRoleInput,
 } from '../../../shared/schemas';
 import type { Db } from '../client';
-import { exercises } from '../schema';
+import { exercises, users } from '../schema';
 
 function toDto(row: typeof exercises.$inferSelect): ExerciseDto {
   return {
@@ -85,4 +87,40 @@ export async function deleteGlobalExercise(db: Db, exerciseId: string): Promise<
 
   await db.delete(exercises).where(eq(exercises.id, exerciseId));
   return true;
+}
+
+// --- Utenti/ruoli ---
+
+function toUserDto(row: typeof users.$inferSelect): AdminUserDto {
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    role: row.role,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+/** Elenca gli utenti per il pannello admin. Espone **solo** campi non personali. */
+export async function listUsers(db: Db): Promise<AdminUserDto[]> {
+  const rows = await db.select().from(users).orderBy(asc(users.createdAt));
+  return rows.map(toUserDto);
+}
+
+export type UpdateUserRoleResult =
+  | { ok: true; user: AdminUserDto }
+  | { ok: false; error: 'not_found' };
+
+/** Cambia il ruolo di un utente (user/admin). */
+export async function updateUserRole(
+  db: Db,
+  userId: string,
+  input: UpdateUserRoleInput,
+): Promise<UpdateUserRoleResult> {
+  const [row] = await db
+    .update(users)
+    .set({ role: input.role, updatedAt: new Date() })
+    .where(eq(users.id, userId))
+    .returning();
+  return row ? { ok: true, user: toUserDto(row) } : { ok: false, error: 'not_found' };
 }

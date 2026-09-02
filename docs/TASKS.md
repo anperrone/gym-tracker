@@ -335,7 +335,7 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
   - Verify: test integrazione (403 per non-admin, CRUD globale, rifiuto su esercizio custom altrui); `npm run check` verde
   - Files: `src/shared/schemas.ts`, `src/server/db/queries/admin.ts`, `src/server/routes/admin.ts`, `src/server/index.ts`, `tests/admin/exercises.test.ts`
 
-- [ ] **T8.3 — API admin utenti/ruoli (lista, cambia ruolo) + test isolamento**
+- [x] **T8.3 — API admin utenti/ruoli (lista, cambia ruolo) + test isolamento**
   - Acceptance: `GET /api/admin/users` (lista: id, email, name, role, createdAt — **niente dati personali**); `PATCH /api/admin/users/:id` (cambia `role` user/admin). L'admin **non** ha alcun endpoint per leggere misure/allenamenti; test esplicito che i dati personali di un utente restano inaccessibili
   - Verify: test integrazione (lista utenti, cambio ruolo, 403 per non-admin, *admin non legge dati personali*); `npm run check` verde
   - Files: `src/shared/schemas.ts`, `src/server/db/queries/admin.ts`, `src/server/routes/admin.ts`, `tests/admin/users.test.ts`

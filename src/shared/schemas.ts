@@ -141,6 +141,22 @@ export const updateGlobalExerciseSchema = z
   .partial();
 export type UpdateGlobalExerciseInput = z.infer<typeof updateGlobalExerciseSchema>;
 
+// --- Admin: utenti/ruoli (M8) ---
+
+/** DTO utente per il pannello admin: **niente dati personali** (misure/allenamenti). */
+export const adminUserSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  name: z.string().nullable(),
+  role: userRoleSchema,
+  createdAt: z.string(), // ISO
+});
+export type AdminUserDto = z.infer<typeof adminUserSchema>;
+
+/** Payload admin: cambia il ruolo di un utente. */
+export const updateUserRoleSchema = z.object({ role: userRoleSchema });
+export type UpdateUserRoleInput = z.infer<typeof updateUserRoleSchema>;
+
 // --- Schede / workout plans (M4) ---
 
 /** Voce di elenco delle schede (con conteggio giorni). */
