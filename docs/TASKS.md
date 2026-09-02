@@ -385,10 +385,11 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
   - Verify: `db:migrate` ok; test (utente disabilitato bloccato); `npm run check` verde
   - Files: `src/server/db/schema.ts`, `migrations/0005_*.sql`, `src/server/middleware/auth.ts`, `src/server/routes/admin.ts`, UI admin, test
 
-- [ ] **T9.6 — E2E completi + verifica install PWA**
-  - Acceptance: coprire i 4 flussi minimi dello SPEC (§2) mancanti; verificare installabilità PWA (manifest+SW) in E2E
+- [x] **T9.6 — E2E completi + verifica install PWA**
+  - Acceptance: coprire i 4 flussi minimi dello SPEC (§7) mancanti; verificare installabilità PWA (manifest+SW) in E2E
   - Verify: `npm run test:e2e` verde
   - Files: `e2e/*.spec.ts`
+  - **Done**: i 4 flussi minimi SPEC §7 sono coperti (login → auth.spec; misurazione → grafico/storico → measurements*; log offline→sync → offline.spec). Completato il flusso 3 (scheda con esercizio dal catalogo **+ uno a testo libero inline**, persistiti) in `plans.spec.ts`. Nuovo `pwa.spec.ts`: requisiti manifest (name/display/start_url/icona scalabile maskable), `<link rel="manifest">` e **registrazione service worker**. Suite E2E completa: **30/30 verdi**.
 
 **Checkpoint M9**: error handling robusto, coverage gate attivo, a11y AA, (se approvati) rate limit + disabilitazione account, E2E completi. `npm run check` + E2E verdi. Chiusura via PR verso `main`.
 
