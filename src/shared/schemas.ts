@@ -121,6 +121,26 @@ export const exerciseFiltersSchema = z.object({
 });
 export type ExerciseFilters = z.infer<typeof exerciseFiltersSchema>;
 
+// --- Admin: catalogo globale (M8) ---
+
+/** Payload admin: crea un esercizio del catalogo globale. */
+export const createGlobalExerciseSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  equipment: equipmentSchema.default('other'),
+  muscleGroup: z.string().trim().max(120).nullish(),
+});
+export type CreateGlobalExerciseInput = z.infer<typeof createGlobalExerciseSchema>;
+
+/** Payload admin: modifica parziale (name/equipment/muscleGroup) di un esercizio globale. */
+export const updateGlobalExerciseSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120),
+    equipment: equipmentSchema,
+    muscleGroup: z.string().trim().max(120).nullable(),
+  })
+  .partial();
+export type UpdateGlobalExerciseInput = z.infer<typeof updateGlobalExerciseSchema>;
+
 // --- Schede / workout plans (M4) ---
 
 /** Voce di elenco delle schede (con conteggio giorni). */

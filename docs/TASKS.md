@@ -330,7 +330,7 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
   - Verify: test integrazione (anon 401, user 403, admin 200 su una rotta di prova); `npm run check` verde
   - Files: `src/server/middleware/auth.ts`, `tests/auth/admin.test.ts`
 
-- [ ] **T8.2 — API admin catalogo globale (CRUD esercizi globali) + Zod + test**
+- [x] **T8.2 — API admin catalogo globale (CRUD esercizi globali) + Zod + test**
   - Acceptance: `GET /api/admin/exercises` (solo globali, `user_id` NULL); `POST` (crea globale); `PATCH /:id` (name/muscleGroup/equipment); `DELETE /:id` (elimina globale). Tutte gated `requireAdmin`; opera **solo** su voci globali (mai sui custom degli utenti); Zod al confine
   - Verify: test integrazione (403 per non-admin, CRUD globale, rifiuto su esercizio custom altrui); `npm run check` verde
   - Files: `src/shared/schemas.ts`, `src/server/db/queries/admin.ts`, `src/server/routes/admin.ts`, `src/server/index.ts`, `tests/admin/exercises.test.ts`
