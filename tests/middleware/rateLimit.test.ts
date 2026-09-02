@@ -74,20 +74,27 @@ describe('rateLimit middleware', () => {
 describe('rate limit — wiring sulle rotte', () => {
   it('throttla gli endpoint OAuth per IP (429 oltre soglia)', async () => {
     const ip = '203.0.113.7';
-    let statusAt429 = 0;
-    for (let i = 1; i <= 40; i++) {
+    let allowed = 0;
+    let got429 = false;
+    // Il limite è 30/min per IP. Iteriamo con margine: anche se il loop attraversa
+    // il confine della finestra fissa (nuovo slot), un secondo blocco di 30 basta.
+    for (let i = 1; i <= 70; i++) {
       const res = await app.request(
         '/auth/google/login',
         { headers: { 'CF-Connecting-IP': ip } },
         env,
       );
       if (res.status === 429) {
-        statusAt429 = i;
+        got429 = true;
         break;
       }
       expect(res.status).toBe(302); // redirect a Google finché sotto soglia
+      allowed++;
     }
-    // Il 31° tentativo (limite 30) deve essere bloccato.
-    expect(statusAt429).toBe(31);
+    expect(got429).toBe(true);
+    // Servono ≥30 richieste consentite prima del blocco (≤60 se si attraversa una finestra):
+    // prova che è montata la policy OAuth e non blocca prematuramente.
+    expect(allowed).toBeGreaterThanOrEqual(30);
+    expect(allowed).toBeLessThanOrEqual(60);
   });
 });

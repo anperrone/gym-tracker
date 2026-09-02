@@ -19,12 +19,16 @@ export type RateLimitOptions = {
 };
 
 /**
- * Rate limiting basato su un contatore in **KV** con TTL sulla finestra.
+ * Rate limiting basato su un contatore in **KV** a **finestra fissa**: la chiave
+ * include lo slot temporale (`…:<floor(now/window)>`), così il contatore si
+ * azzera naturalmente a ogni finestra invece di far slittare il TTL a ogni
+ * scrittura.
  *
- * Nota: KV è a consistenza eventuale e il ciclo read→increment→write non è
- * atomico; il conteggio è quindi approssimato (può sotto-contare in caso di
- * corse). È sufficiente per proteggere endpoint sensibili nell'MVP; per limiti
- * rigorosi si passerebbe a Durable Objects o al prodotto Rate Limiting di CF.
+ * È **best-effort**: KV è a consistenza eventuale e il ciclo read→increment→write
+ * non è atomico, quindi il conteggio è approssimato (può sotto-contare in caso di
+ * corse). Sufficiente come difesa in profondità nell'MVP; per limiti rigorosi si
+ * userebbe un Durable Object o il binding Rate Limiting di CF. In caso di errore
+ * KV **fail-open**: non blocca il percorso critico (login/mutation).
  */
 export function rateLimit(opts: RateLimitOptions) {
   const windowSeconds = Math.max(opts.windowSeconds ?? MIN_WINDOW_SECONDS, MIN_WINDOW_SECONDS);
@@ -33,20 +37,32 @@ export function rateLimit(opts: RateLimitOptions) {
       return next();
     }
     const kv = c.env.RATE_LIMIT;
-    const bucket = `rl:${opts.prefix}:${opts.keyFrom(c)}`;
-    const count = Number((await kv.get(bucket)) ?? '0');
-    if (count >= opts.limit) {
-      c.header('Retry-After', String(windowSeconds));
-      return c.json({ error: 'Troppe richieste. Riprova più tardi.' }, 429);
+    const slot = Math.floor(Date.now() / (windowSeconds * 1000));
+    const bucket = `rl:${opts.prefix}:${opts.keyFrom(c)}:${slot}`;
+    try {
+      const parsed = Number(await kv.get(bucket));
+      const count = Number.isFinite(parsed) ? parsed : 0; // fail-safe su valori corrotti
+      if (count >= opts.limit) {
+        c.header('Retry-After', String(windowSeconds));
+        return c.json({ error: 'Troppe richieste. Riprova più tardi.' }, 429);
+      }
+      await kv.put(bucket, String(count + 1), { expirationTtl: windowSeconds });
+    } catch (err) {
+      // KV non disponibile: il limiter è best-effort, non deve bloccare l'app.
+      console.error('rateLimit: KV non disponibile, richiesta consentita:', String(err));
     }
-    await kv.put(bucket, String(count + 1), { expirationTtl: windowSeconds });
     return next();
   });
 }
 
-/** IP del client dietro Cloudflare, con fallback per dev/test. */
+/**
+ * IP del client. Usa **solo** `CF-Connecting-IP` (impostato da Cloudflare, non
+ * falsificabile dal client); mai `X-Forwarded-For`, che è manipolabile e
+ * permetterebbe di ruotare la chiave per aggirare il limite. In dev/test
+ * l'header è assente → fallback costante.
+ */
 export function clientIp(c: Context<AppEnv>): string {
-  return c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For') ?? 'local';
+  return c.req.header('CF-Connecting-IP') ?? 'local';
 }
 
 /**
@@ -61,11 +77,16 @@ export const rateLimitOAuth = rateLimit({
 
 /**
  * Throttle delle mutation autenticate, scoping **per utente** (va montato dopo
- * `requireAuth`). Salta le richieste di sola lettura (GET/HEAD).
+ * `requireAuth`, quindi `user` è sempre presente). Salta le sole letture (GET/HEAD).
+ *
+ * Il limite è ampio: il logging offline-first (M6) mette in coda le mutation e le
+ * rigioca in blocco alla riconnessione; una soglia bassa le farebbe fallire (429)
+ * e, senza retry, perdere. 300/min lascia margine a sessioni lunghe pur arginando
+ * gli abusi automatici.
  */
 export const rateLimitMutations = rateLimit({
   prefix: 'mut',
-  limit: 120,
+  limit: 300,
   methods: ['POST', 'PATCH', 'PUT', 'DELETE'],
-  keyFrom: (c) => c.get('user')?.id ?? clientIp(c),
+  keyFrom: (c) => c.get('user').id,
 });
