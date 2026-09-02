@@ -31,9 +31,8 @@
       // Contatori per il rate limiting (callback OAuth + mutation).
       "binding": "RATE_LIMIT",
       // Id del namespace KV remoto (da `wrangler kv namespace create RATE_LIMIT`).
-      // Per lo sviluppo `--local` l'id non deve essere reale; sostituirlo con
-      // quello reale prima del deploy in produzione.
-      "id": "0000000000000000000000000000rate"
+      // Per lo sviluppo `--local` l'id non deve essere reale.
+      "id": "2857dc8bb66f439d89b6d02931e01490"
     }
   ]
 }
