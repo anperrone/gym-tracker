@@ -38,4 +38,15 @@ describe('<AppShell />', () => {
     renderInRouter(<AppShell>x</AppShell>);
     expect(await screen.findByRole('button', { name: /tema/i })).toBeInTheDocument();
   });
+
+  it('nasconde la voce Admin agli utenti standard', async () => {
+    renderInRouter(<AppShell>x</AppShell>);
+    await screen.findByText('Misure');
+    expect(screen.queryByText('Admin')).not.toBeInTheDocument();
+  });
+
+  it('mostra la voce Admin agli amministratori', async () => {
+    renderInRouter(<AppShell isAdmin>x</AppShell>);
+    expect(await screen.findByText('Admin')).toBeInTheDocument();
+  });
 });

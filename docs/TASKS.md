@@ -1,7 +1,7 @@
 # Tasks: Gym Tracker
 
 > Fase 3 del workflow spec-driven. Riferimenti: `SPEC.md` (APPROVED), `PLAN.md` (APPROVED), `SPEC-ui-redesign.md`.
-> Stato: **APPROVED** (2026-09-01) — implementazione in corso. **Ripriorizzato 2026-09-01**: fatti M0/M1/M2/**MU**/**M3**/**M4**/**M5**/**M6**/**M7**; prossimo **M8 (Admin)**.
+> Stato: **APPROVED** (2026-09-01) — implementazione in corso. **Ripriorizzato 2026-09-01**: fatti M0/M1/M2/**MU**/**M3**/**M4**/**M5**/**M6**/**M7**/**M8**; prossimo **M9 (Hardening & deploy)**.
 
 Task discreti, ordinati per dipendenza. Ogni task: ≤ ~5 file, criteri di accettazione e passo di verifica espliciti. Dettagliati per **M0** e **M1**; M2–M9 restano a granularità alta e verranno scomposti al loro turno.
 
@@ -321,14 +321,46 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ---
 
+## M8 — Admin (pannello tecnico) ✅ (branch `feat/m8-admin`)
+
+> Avviato 2026-09-02 dopo M7. Branch: `feat/m8-admin`. Riferimento: `SPEC.md` §1 (persona **Admin**), §8 (Boundaries: *admin non legge dati personali*), §10 (criterio: *admin non può leggere misure/allenamenti; può gestire il catalogo globale*). L'admin cura il **catalogo esercizi globale** (`user_id` NULL) e gestisce **utenti/ruoli**; **non** ha accesso ai dati personali (misure/allenamenti). **Nessuna modifica di schema**: `role` e `user_id` NULL esistono già. La **disabilitazione account** richiede una colonna nuova → **rimandata a M9** (ask-first su schema). Ordine interno: middleware → API catalogo → API utenti/ruoli → frontend → E2E.
+
+- [x] **T8.1 — Middleware `requireAdmin` (role-gated, default-deny) + test**
+  - Acceptance: middleware che, dopo `requireAuth`, richiede `user.role === 'admin'`; anonimo → 401, utente standard → 403, admin → passa. Riusa `c.get('user')`.
+  - Verify: test integrazione (anon 401, user 403, admin 200 su una rotta di prova); `npm run check` verde
+  - Files: `src/server/middleware/auth.ts`, `tests/auth/admin.test.ts`
+
+- [x] **T8.2 — API admin catalogo globale (CRUD esercizi globali) + Zod + test**
+  - Acceptance: `GET /api/admin/exercises` (solo globali, `user_id` NULL); `POST` (crea globale); `PATCH /:id` (name/muscleGroup/equipment); `DELETE /:id` (elimina globale). Tutte gated `requireAdmin`; opera **solo** su voci globali (mai sui custom degli utenti); Zod al confine
+  - Verify: test integrazione (403 per non-admin, CRUD globale, rifiuto su esercizio custom altrui); `npm run check` verde
+  - Files: `src/shared/schemas.ts`, `src/server/db/queries/admin.ts`, `src/server/routes/admin.ts`, `src/server/index.ts`, `tests/admin/exercises.test.ts`
+
+- [x] **T8.3 — API admin utenti/ruoli (lista, cambia ruolo) + test isolamento**
+  - Acceptance: `GET /api/admin/users` (lista: id, email, name, role, createdAt — **niente dati personali**); `PATCH /api/admin/users/:id` (cambia `role` user/admin). L'admin **non** ha alcun endpoint per leggere misure/allenamenti; test esplicito che i dati personali di un utente restano inaccessibili
+  - Verify: test integrazione (lista utenti, cambio ruolo, 403 per non-admin, *admin non legge dati personali*); `npm run check` verde
+  - Files: `src/shared/schemas.ts`, `src/server/db/queries/admin.ts`, `src/server/routes/admin.ts`, `tests/admin/users.test.ts`
+
+- [x] **T8.4 — Frontend pannello admin (catalogo + utenti/ruoli) + nav role-gated**
+  - Acceptance: client API + hook; `AdminPage` con gestione catalogo globale (crea/modifica/elimina) e utenti/ruoli (lista, cambia ruolo); voce nav "Admin" visibile **solo** all'admin + rotta `/admin` protetta lato client; stati loading/empty a tema
+  - Verify: test render/hook; `npm run check` verde
+  - Files: `src/client/lib/api.ts`, `src/client/features/admin/useAdmin.ts`, `AdminPage.tsx`, `src/client/routes/admin.tsx`, `src/client/components/AppShell.tsx`, `src/client/router.tsx`
+
+- [x] **T8.5 — E2E admin**
+  - Acceptance: E2E — admin aggiunge un esercizio al catalogo globale e cambia il ruolo di un utente; un utente standard non vede la voce Admin e riceve 403 sulle API admin
+  - Verify: `npm run test:e2e` verde
+  - Files: `e2e/admin.spec.ts`
+
+**Checkpoint M8**: route role-gated (`requireAdmin`); gestione catalogo globale e utenti/ruoli; admin **non** legge dati personali (verificato a livello API); `npm run check` + E2E verdi. Chiusura via PR verso `main`.
+
+---
+
 ## Resto — da dettagliare al proprio turno
 
-> **Dopo M7.** Granularità alta ora; scomposizione in task al momento dell'implementazione.
-- **M8 Admin** — route role-gated; gestione catalogo globale; gestione utenti/ruoli; test "admin non legge dati personali".
-- **M9 Hardening & deploy** — rate limit (KV), error handling, a11y, E2E completi, coverage gate, migrazioni prod, deploy, verifica install PWA.
+> **Dopo M8.** Granularità alta ora; scomposizione in task al momento dell'implementazione.
+- **M9 Hardening & deploy** — **disabilitazione account** (colonna nuova + migrazione, ask-first), rate limit (KV), error handling, a11y, E2E completi, coverage gate, migrazioni prod, deploy, verifica install PWA.
 
 ---
 
 ## Prossimo passo
 
-Prossima implementazione: **M7 — Progressi & grafici**, a partire da **T7.1** (calcoli puri). Un task alla volta, `npm run check` verde prima di procedere; chiusura milestone via PR verso `main`. Poi **M8 Admin**.
+**M8 — Admin** completato (T8.1–T8.5): middleware `requireAdmin`, API catalogo globale + utenti/ruoli, pannello admin frontend, E2E. Chiusura via PR verso `main`. Prossima implementazione: **M9 — Hardening & deploy**.

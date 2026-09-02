@@ -8,7 +8,8 @@ import type {
 import type { Db } from '../client';
 import { exercises } from '../schema';
 
-function toDto(row: typeof exercises.$inferSelect): ExerciseDto {
+/** Mappa una riga `exercises` sul DTO condiviso. Riusata dalle query admin (catalogo globale). */
+export function exerciseToDto(row: typeof exercises.$inferSelect): ExerciseDto {
   return {
     id: row.id,
     name: row.name,
@@ -44,7 +45,7 @@ export async function listExercises(
     .where(and(...conditions))
     .orderBy(asc(exercises.name));
 
-  return rows.map(toDto);
+  return rows.map(exerciseToDto);
 }
 
 /**
@@ -89,7 +90,7 @@ export async function createCustomExercise(
     })
     .returning();
 
-  return { ok: true, exercise: toDto(row) };
+  return { ok: true, exercise: exerciseToDto(row) };
 }
 
 export type UpdateExerciseResult =
@@ -125,7 +126,7 @@ export async function updateExercise(
   // La riga potrebbe sparire tra il controllo di proprietà e l'update (es. delete concorrente).
   if (!row) return { ok: false, error: 'not_found' };
 
-  return { ok: true, exercise: toDto(row) };
+  return { ok: true, exercise: exerciseToDto(row) };
 }
 
 /** Elimina un esercizio custom di proprietà. False se inesistente/globale/non di proprietà. */

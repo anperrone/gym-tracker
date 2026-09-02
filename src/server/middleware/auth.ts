@@ -26,3 +26,18 @@ export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
   c.set('session', result.session);
   await next();
 });
+
+/**
+ * Middleware role-gated: richiede un utente **admin**. Va usato dopo `requireAuth`,
+ * che popola `c.get("user")`. Anonimo → 401 (difensivo); utente standard → 403.
+ */
+export const requireAdmin = createMiddleware<AppEnv>(async (c, next) => {
+  const user = c.get('user');
+  if (!user) {
+    return c.json({ error: 'Non autenticato' }, 401);
+  }
+  if (user.role !== 'admin') {
+    return c.json({ error: 'Accesso negato' }, 403);
+  }
+  await next();
+});

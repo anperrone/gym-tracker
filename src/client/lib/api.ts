@@ -1,5 +1,8 @@
 import {
+  type AdminUserDto,
+  adminUserSchema,
   type CreateExerciseInput,
+  type CreateGlobalExerciseInput,
   type CreateMeasurementInput,
   type CreatePlanDayInput,
   type CreatePlanExerciseInput,
@@ -28,10 +31,12 @@ import {
   progressPointSchema,
   type StartSessionInput,
   type UpdateExerciseInput,
+  type UpdateGlobalExerciseInput,
   type UpdatePlanExerciseInput,
   type UpdatePlanInput,
   type UpdateSessionInput,
   type UpdateSetInput,
+  type UserRole,
   type WorkoutSessionDetailDto,
   type WorkoutSessionSummaryDto,
   workoutSessionDetailSchema,
@@ -329,4 +334,36 @@ export function fetchExerciseProgress(exerciseId: string): Promise<ProgressPoint
     `/api/progress/exercises/${encodeURIComponent(exerciseId)}`,
     z.array(progressPointSchema),
   );
+}
+
+// --- Admin (catalogo globale + utenti/ruoli) ---
+
+export function fetchAdminExercises(): Promise<ExerciseDto[]> {
+  return getJson('/api/admin/exercises', z.array(exerciseSchema));
+}
+
+export function createAdminExercise(input: CreateGlobalExerciseInput): Promise<ExerciseDto> {
+  return sendJson('/api/admin/exercises', 'POST', exerciseSchema, input);
+}
+
+export function updateAdminExercise(
+  id: string,
+  input: UpdateGlobalExerciseInput,
+): Promise<ExerciseDto> {
+  return sendJson(`/api/admin/exercises/${id}`, 'PATCH', exerciseSchema, input);
+}
+
+export async function deleteAdminExercise(id: string): Promise<void> {
+  const res = await fetch(`/api/admin/exercises/${id}`, { method: 'DELETE' });
+  if (!res.ok) {
+    throw new ApiError(res.status, 'Eliminazione fallita');
+  }
+}
+
+export function fetchAdminUsers(): Promise<AdminUserDto[]> {
+  return getJson('/api/admin/users', z.array(adminUserSchema));
+}
+
+export function updateUserRole(id: string, role: UserRole): Promise<AdminUserDto> {
+  return sendJson(`/api/admin/users/${id}`, 'PATCH', adminUserSchema, { role });
 }

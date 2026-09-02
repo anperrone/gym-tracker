@@ -3,6 +3,7 @@ import { AuthenticatedLayout } from '@/features/auth/AuthenticatedLayout';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { PlanDetailPage } from '@/features/plans/PlanDetailPage';
 import { WorkoutSessionPage } from '@/features/workouts/WorkoutSessionPage';
+import { AdminPage } from './routes/admin';
 import { ExercisesPage } from './routes/exercises';
 import { HomePage } from './routes/home';
 import { MeasurementsPage } from './routes/measurements';
@@ -80,6 +81,12 @@ const progressRoute = createRoute({
   component: ProgressPage,
 });
 
+const adminRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/admin',
+  component: AdminPage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   authenticatedRoute.addChildren([
@@ -91,6 +98,7 @@ const routeTree = rootRoute.addChildren([
     workoutRoute,
     workoutSessionRoute,
     progressRoute,
+    adminRoute,
   ]),
 ]);
 

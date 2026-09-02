@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { admin } from './routes/admin';
 import { auth } from './routes/auth';
 import { exercises } from './routes/exercises';
 import { me } from './routes/me';
@@ -18,6 +19,7 @@ app.route('/api/exercises', exercises);
 app.route('/api/plans', plans);
 app.route('/api/sessions', sessions);
 app.route('/api/progress', progress);
+app.route('/api/admin', admin);
 
 // OAuth (fuori da /api: redirect di navigazione)
 app.route('/auth', auth);
