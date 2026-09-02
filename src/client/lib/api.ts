@@ -367,3 +367,7 @@ export function fetchAdminUsers(): Promise<AdminUserDto[]> {
 export function updateUserRole(id: string, role: UserRole): Promise<AdminUserDto> {
   return sendJson(`/api/admin/users/${id}`, 'PATCH', adminUserSchema, { role });
 }
+
+export function setUserDisabled(id: string, disabled: boolean): Promise<AdminUserDto> {
+  return sendJson(`/api/admin/users/${id}/disabled`, 'PATCH', adminUserSchema, { disabled });
+}

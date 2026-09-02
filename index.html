@@ -8,7 +8,7 @@
     <script>
       // Anti-FOUC: imposta il tema sul <html> prima del primo paint.
       // Logica allineata a src/client/lib/theme.ts (chiave "gt-theme").
-      (function () {
+      (() => {
         try {
           let t = localStorage.getItem("gt-theme");
           if (t !== "light" && t !== "dark") {

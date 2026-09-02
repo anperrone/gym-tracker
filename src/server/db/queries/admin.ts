@@ -3,11 +3,12 @@ import type {
   AdminUserDto,
   CreateGlobalExerciseInput,
   ExerciseDto,
+  SetUserDisabledInput,
   UpdateGlobalExerciseInput,
   UpdateUserRoleInput,
 } from '../../../shared/schemas';
 import type { Db } from '../client';
-import { exercises, planExercises, users } from '../schema';
+import { exercises, planExercises, sessions, users } from '../schema';
 import { exerciseToDto } from './exercises';
 
 /** Elenca **solo** il catalogo globale (user_id NULL); i custom degli utenti sono esclusi. */
@@ -106,6 +107,7 @@ function toUserDto(row: typeof users.$inferSelect): AdminUserDto {
     name: row.name,
     role: row.role,
     createdAt: row.createdAt.toISOString(),
+    disabledAt: row.disabledAt ? row.disabledAt.toISOString() : null,
   };
 }
 
@@ -137,4 +139,34 @@ export async function updateUserRole(
     .where(eq(users.id, userId))
     .returning();
   return row ? { ok: true, user: toUserDto(row) } : { ok: false, error: 'not_found' };
+}
+
+export type SetUserDisabledResult =
+  | { ok: true; user: AdminUserDto }
+  | { ok: false; error: 'not_found' | 'self_forbidden' };
+
+/**
+ * Abilita/disabilita un account. Un admin **non** può disabilitare sé stesso
+ * (`self_forbidden`): evita il self-lockout. Disabilitando si **revocano subito
+ * tutte le sessioni** dell'utente (logout immediato su ogni dispositivo).
+ */
+export async function setUserDisabled(
+  db: Db,
+  actingUserId: string,
+  userId: string,
+  input: SetUserDisabledInput,
+): Promise<SetUserDisabledResult> {
+  if (userId === actingUserId) return { ok: false, error: 'self_forbidden' };
+
+  const [row] = await db
+    .update(users)
+    .set({ disabledAt: input.disabled ? new Date() : null, updatedAt: new Date() })
+    .where(eq(users.id, userId))
+    .returning();
+  if (!row) return { ok: false, error: 'not_found' };
+
+  if (input.disabled) {
+    await db.delete(sessions).where(eq(sessions.userId, userId));
+  }
+  return { ok: true, user: toUserDto(row) };
 }

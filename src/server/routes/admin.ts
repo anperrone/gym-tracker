@@ -2,6 +2,7 @@ import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import {
   createGlobalExerciseSchema,
+  setUserDisabledSchema,
   updateGlobalExerciseSchema,
   updateUserRoleSchema,
 } from '../../shared/schemas';
@@ -11,6 +12,7 @@ import {
   deleteGlobalExercise,
   listGlobalExercises,
   listUsers,
+  setUserDisabled,
   updateGlobalExercise,
   updateUserRole,
 } from '../db/queries/admin';
@@ -75,6 +77,22 @@ export const admin = new Hono<AppEnv>()
     if (!result.ok) {
       if (result.error === 'self_forbidden') {
         return c.json({ error: 'Non puoi cambiare il tuo ruolo' }, 409);
+      }
+      return c.json({ error: 'Non trovato' }, 404);
+    }
+    return c.json(result.user);
+  })
+  // Utenti: abilita/disabilita l'account (non il proprio → evita self-lockout).
+  .patch('/users/:id/disabled', zValidator('json', setUserDisabledSchema), async (c) => {
+    const result = await setUserDisabled(
+      createDb(c.env.DB),
+      c.get('user').id,
+      c.req.param('id'),
+      c.req.valid('json'),
+    );
+    if (!result.ok) {
+      if (result.error === 'self_forbidden') {
+        return c.json({ error: 'Non puoi disabilitare il tuo account' }, 409);
       }
       return c.json({ error: 'Non trovato' }, 404);
     }

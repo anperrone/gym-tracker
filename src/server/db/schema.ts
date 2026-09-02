@@ -23,6 +23,8 @@ export const users = sqliteTable('users', {
     .default('user'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  // Disabilitazione account (admin): se valorizzato, l'utente è bloccato in `requireAuth`.
+  disabledAt: integer('disabled_at', { mode: 'timestamp' }),
 });
 
 export const sessions = sqliteTable(
