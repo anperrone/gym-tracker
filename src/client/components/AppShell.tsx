@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
-import { ChartIcon, ClipboardIcon, DumbbellIcon, ListIcon, RulerIcon } from './icons';
+import { ChartIcon, ClipboardIcon, DumbbellIcon, ListIcon, RulerIcon, ShieldIcon } from './icons';
 import { ThemeToggle } from './ThemeToggle';
 
 type IconComponent = (props: { className?: string }) => ReactNode;
@@ -14,15 +14,21 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'progress', label: 'Progressi', Icon: ChartIcon, to: '/progress' },
 ];
 
+// Voce riservata all'admin (aggiunta solo quando isAdmin).
+const ADMIN_NAV_ITEM: NavItem = { key: 'admin', label: 'Admin', Icon: ShieldIcon, to: '/admin' };
+
 const itemBase = 'flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs';
 
 export function AppShell({
   children,
   headerRight,
+  isAdmin = false,
 }: {
   children: ReactNode;
   headerRight?: ReactNode;
+  isAdmin?: boolean;
 }) {
+  const navItems = isAdmin ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS;
   return (
     <div className="min-h-dvh flex flex-col bg-bg text-text">
       <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-surface px-4 py-3">
@@ -37,9 +43,10 @@ export function AppShell({
 
       <nav
         aria-label="Navigazione principale"
-        className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-5 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
+        style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
+        className="fixed inset-x-0 bottom-0 z-10 grid border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
       >
-        {NAV_ITEMS.map(({ key, label, Icon, to }) =>
+        {navItems.map(({ key, label, Icon, to }) =>
           to ? (
             <Link
               key={key}

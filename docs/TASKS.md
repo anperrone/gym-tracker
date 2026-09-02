@@ -340,7 +340,7 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
   - Verify: test integrazione (lista utenti, cambio ruolo, 403 per non-admin, *admin non legge dati personali*); `npm run check` verde
   - Files: `src/shared/schemas.ts`, `src/server/db/queries/admin.ts`, `src/server/routes/admin.ts`, `tests/admin/users.test.ts`
 
-- [ ] **T8.4 — Frontend pannello admin (catalogo + utenti/ruoli) + nav role-gated**
+- [x] **T8.4 — Frontend pannello admin (catalogo + utenti/ruoli) + nav role-gated**
   - Acceptance: client API + hook; `AdminPage` con gestione catalogo globale (crea/modifica/elimina) e utenti/ruoli (lista, cambia ruolo); voce nav "Admin" visibile **solo** all'admin + rotta `/admin` protetta lato client; stati loading/empty a tema
   - Verify: test render/hook; `npm run check` verde
   - Files: `src/client/lib/api.ts`, `src/client/features/admin/useAdmin.ts`, `AdminPage.tsx`, `src/client/routes/admin.tsx`, `src/client/components/AppShell.tsx`, `src/client/router.tsx`

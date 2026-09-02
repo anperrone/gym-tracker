@@ -4,7 +4,7 @@ import { UserMenu } from './UserMenu';
 import { useAuth } from './useAuth';
 
 export function AuthenticatedLayout() {
-  const { isLoading, isAuthenticated } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
 
   if (isLoading) {
     return (
@@ -17,7 +17,7 @@ export function AuthenticatedLayout() {
   }
 
   return (
-    <AppShell headerRight={<UserMenu />}>
+    <AppShell headerRight={<UserMenu />} isAdmin={user?.role === 'admin'}>
       <Outlet />
     </AppShell>
   );
