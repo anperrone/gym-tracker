@@ -1,7 +1,7 @@
 # Tasks: Gym Tracker
 
 > Fase 3 del workflow spec-driven. Riferimenti: `SPEC.md` (APPROVED), `PLAN.md` (APPROVED), `SPEC-ui-redesign.md`.
-> Stato: **APPROVED** (2026-09-01) — implementazione in corso. **Ripriorizzato 2026-09-01**: fatti M0/M1/M2/**MU**/**M3**/**M4**/**M5**/**M6**/**M7**/**M8**; prossimo **M9 (Hardening & deploy)**.
+> Stato: **APPROVED** (2026-09-01) — implementazione in corso. **Ripriorizzato 2026-09-01**: fatti M0/M1/M2/**MU**/**M3**/**M4**/**M5**/**M6**/**M7**/**M8**; in corso **M9 (Hardening & deploy)**.
 
 Task discreti, ordinati per dipendenza. Ogni task: ≤ ~5 file, criteri di accettazione e passo di verifica espliciti. Dettagliati per **M0** e **M1**; M2–M9 restano a granularità alta e verranno scomposti al loro turno.
 
@@ -354,13 +354,50 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
 
 ---
 
+## M9 — Hardening & deploy 🚧 (branch `feat/m9-hardening`)
+
+> Avviato 2026-09-02 dopo M8 (mergiato #18, deploy prod verificato). Branch: `feat/m9-hardening`. Riferimento: `SPEC.md` §2 (coverage **≥80%**), §8 (Boundaries). L'app è **già live** con auto-deploy su merge a `main`: M9 è un **hardening pass**, non un primo deploy. Ordine: prima i task **senza nuova infra** (T9.1–T9.3), poi i task **ask-first** (T9.4 KV, T9.5 migrazione) con conferma esplicita dell'utente, infine E2E/PWA (T9.6).
+
+- [x] **T9.1 — Error handling (client 404 + error boundary; server `onError`)**
+  - Acceptance: rotta client **not-found** a tema (link home) e **error boundary** globale; il Worker ha un `onError` che risponde `{ error }` **500 JSON** (nessun leak di stack); le API sconosciute `/api/*` restano 404 JSON
+  - Verify: test render (path sconosciuto → not-found; error boundary mostra fallback); `npm run check` verde
+  - Files: `src/client/router.tsx`, `src/client/components/ErrorState.tsx`, `src/server/index.ts`, test
+
+- [ ] **T9.2 — Coverage gate ≥ 80% (server logic + `shared/`)**
+  - Acceptance: `vitest` con soglie di copertura (≥80% su `src/server/**` di logica e `src/shared/**`); `npm run check`/CI falliscono sotto soglia; colmare eventuali gap con test
+  - Verify: `npm run test:coverage` sopra soglia; CI aggiornata; `npm run check` verde
+  - Files: `vitest.config.ts`, `.github/workflows/ci.yml`, eventuali test aggiunti
+
+- [ ] **T9.3 — A11y hardening**
+  - Acceptance: focus management sulle rotte, `aria-*` mancanti, target touch ≥44px verificati, keyboard nav; contrasto AA già in MU; opz. check axe in un E2E
+  - Verify: audit (axe/manuale); `npm run check` (+ eventuale E2E) verde
+  - Files: componenti UI interessati, eventuale `e2e/a11y.spec.ts`
+
+- [ ] **T9.4 — Rate limiting (KV)** ⚠️ *ask-first: nuovo binding KV*
+  - Acceptance: throttle sugli endpoint sensibili (callback OAuth, mutation) con contatore su **KV**; risposta `429` oltre soglia; scoping per IP/utente
+  - Verify: test integrazione (oltre soglia → 429); `npm run check` verde
+  - Files: `wrangler.jsonc` (binding KV), `src/server/middleware/rateLimit.ts`, test
+
+- [ ] **T9.5 — Disabilitazione account** ⚠️ *ask-first: migrazione schema*
+  - Acceptance: colonna `users.disabled_at` (migrazione); `requireAuth` rifiuta gli utenti disabilitati (401/403 + sessione invalidata); toggle nel pannello admin; test isolamento
+  - Verify: `db:migrate` ok; test (utente disabilitato bloccato); `npm run check` verde
+  - Files: `src/server/db/schema.ts`, `migrations/0005_*.sql`, `src/server/middleware/auth.ts`, `src/server/routes/admin.ts`, UI admin, test
+
+- [ ] **T9.6 — E2E completi + verifica install PWA**
+  - Acceptance: coprire i 4 flussi minimi dello SPEC (§2) mancanti; verificare installabilità PWA (manifest+SW) in E2E
+  - Verify: `npm run test:e2e` verde
+  - Files: `e2e/*.spec.ts`
+
+**Checkpoint M9**: error handling robusto, coverage gate attivo, a11y AA, (se approvati) rate limit + disabilitazione account, E2E completi. `npm run check` + E2E verdi. Chiusura via PR verso `main`.
+
+---
+
 ## Resto — da dettagliare al proprio turno
 
-> **Dopo M8.** Granularità alta ora; scomposizione in task al momento dell'implementazione.
-- **M9 Hardening & deploy** — **disabilitazione account** (colonna nuova + migrazione, ask-first), rate limit (KV), error handling, a11y, E2E completi, coverage gate, migrazioni prod, deploy, verifica install PWA.
+> **Dopo M9.** Fasi successive (SPEC §9): foto progressi (R2), import scheda PDF/OCR, notifiche push, unità imperiali/i18n.
 
 ---
 
 ## Prossimo passo
 
-**M8 — Admin** completato (T8.1–T8.5): middleware `requireAdmin`, API catalogo globale + utenti/ruoli, pannello admin frontend, E2E. Chiusura via PR verso `main`. Prossima implementazione: **M9 — Hardening & deploy**.
+**M8 — Admin** completato e mergiato (#18); deploy prod verificato. In corso: **M9 — Hardening & deploy**, a partire da **T9.1** (error handling). Task senza infra (T9.1–T9.3) prima; T9.4 (KV) e T9.5 (migrazione) sono **ask-first** e attendono conferma esplicita.

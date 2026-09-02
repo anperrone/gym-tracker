@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { admin } from './routes/admin';
 import { auth } from './routes/auth';
 import { exercises } from './routes/exercises';
@@ -29,5 +30,15 @@ app.all('/api/*', (c) => c.json({ error: 'Not found' }, 404));
 
 // Tutto il resto → static assets / SPA fallback (index.html).
 app.all('*', (c) => c.env.ASSETS.fetch(c.req.raw));
+
+// Handler d'errore: preserva le HTTPException; per il resto risponde 500 JSON
+// senza esporre lo stack. Non logga PII/token (SPEC §8).
+app.onError((err, c) => {
+  if (err instanceof HTTPException) {
+    return err.getResponse();
+  }
+  console.error('Errore non gestito:', err instanceof Error ? err.message : String(err));
+  return c.json({ error: 'Errore interno' }, 500);
+});
 
 export default app;

@@ -1,4 +1,5 @@
-import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router';
+import { createRootRoute, createRoute, createRouter, Link, Outlet } from '@tanstack/react-router';
+import { ErrorState } from '@/components/ErrorState';
 import { AuthenticatedLayout } from '@/features/auth/AuthenticatedLayout';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { PlanDetailPage } from '@/features/plans/PlanDetailPage';
@@ -102,7 +103,42 @@ const routeTree = rootRoute.addChildren([
   ]),
 ]);
 
-export const router = createRouter({ routeTree });
+const homeLinkClass =
+  'rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-fg transition-opacity hover:opacity-90';
+
+function NotFound() {
+  return (
+    <ErrorState
+      title="Pagina non trovata"
+      description="Il percorso richiesto non esiste o è stato spostato."
+      action={
+        <Link to="/" className={homeLinkClass}>
+          Torna alla home
+        </Link>
+      }
+    />
+  );
+}
+
+function RouterError() {
+  return (
+    <ErrorState
+      title="Qualcosa è andato storto"
+      description="Si è verificato un errore imprevisto. Riprova o torna alla home."
+      action={
+        <Link to="/" className={homeLinkClass}>
+          Torna alla home
+        </Link>
+      }
+    />
+  );
+}
+
+export const router = createRouter({
+  routeTree,
+  defaultNotFoundComponent: NotFound,
+  defaultErrorComponent: RouterError,
+});
 
 declare module '@tanstack/react-router' {
   interface Register {
