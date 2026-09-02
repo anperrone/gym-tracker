@@ -38,6 +38,7 @@ export default defineConfig(async () => {
             cloudflareTest({
               wrangler: { configPath: './wrangler.jsonc' },
               miniflare: {
+                kvNamespaces: ['RATE_LIMIT'],
                 bindings: {
                   TEST_MIGRATIONS: migrations,
                   GOOGLE_CLIENT_ID: 'test-client-id',

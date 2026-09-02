@@ -15,6 +15,7 @@ import {
   updateUserRole,
 } from '../db/queries/admin';
 import { requireAdmin, requireAuth } from '../middleware/auth';
+import { rateLimitMutations } from '../middleware/rateLimit';
 import type { AppEnv } from '../types';
 
 // Pannello tecnico: tutte le rotte sono role-gated (requireAuth → requireAdmin).
@@ -23,6 +24,7 @@ import type { AppEnv } from '../types';
 export const admin = new Hono<AppEnv>()
   .use(requireAuth)
   .use(requireAdmin)
+  .use(rateLimitMutations)
   // Catalogo globale: elenco.
   .get('/exercises', async (c) => {
     const rows = await listGlobalExercises(createDb(c.env.DB));

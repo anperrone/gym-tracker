@@ -375,10 +375,11 @@ Convenzione: `[ ]` da fare · `[~]` in corso · `[x]` fatto. Ogni task chiude so
   - Files: componenti UI interessati, eventuale `e2e/a11y.spec.ts`
   - **Done**: skip link + `<main id="main-content" tabindex=-1>` con focus management al cambio rotta; target touch `IconButton` 36→44px; `:focus-visible` coerente in entrambi i temi; `aria-current` sui link nav (nativo TanStack). E2E `a11y.spec.ts` con **axe** (WCAG 2 A/AA): **0 violazioni** su login + 6 pagine autenticate; skip link primo focus → `main`.
 
-- [ ] **T9.4 — Rate limiting (KV)** ⚠️ *ask-first: nuovo binding KV*
+- [x] **T9.4 — Rate limiting (KV)** ⚠️ *ask-first: nuovo binding KV* — **approvato 2026-09-02**
   - Acceptance: throttle sugli endpoint sensibili (callback OAuth, mutation) con contatore su **KV**; risposta `429` oltre soglia; scoping per IP/utente
   - Verify: test integrazione (oltre soglia → 429); `npm run check` verde
   - Files: `wrangler.jsonc` (binding KV), `src/server/middleware/rateLimit.ts`, test
+  - **Done**: middleware `rateLimit` con contatore KV + TTL sulla finestra (min 60s). `rateLimitOAuth` (30/min per IP su `/auth/google/*`); `rateLimitMutations` (120/min per utente, solo POST/PATCH/PUT/DELETE) montato dopo `requireAuth` su measurements/exercises/plans/sessions/admin. `429` + `Retry-After`. Test unit (limite/scoping/metodi) + integrazione wiring OAuth (31° → 429). Binding `RATE_LIMIT` in `wrangler.jsonc` + miniflare test. **Manuale prima del deploy prod**: `wrangler kv namespace create RATE_LIMIT` e sostituire l'`id` placeholder in `wrangler.jsonc` (+ permesso token *Workers KV Storage:Edit*). Nota: KV è eventual-consistency → conteggio approssimato (sufficiente per l'MVP).
 
 - [ ] **T9.5 — Disabilitazione account** ⚠️ *ask-first: migrazione schema*
   - Acceptance: colonna `users.disabled_at` (migrazione); `requireAuth` rifiuta gli utenti disabilitati (401/403 + sessione invalidata); toggle nel pannello admin; test isolamento

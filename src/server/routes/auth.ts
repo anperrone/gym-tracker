@@ -18,6 +18,7 @@ import { createSession, invalidateSession } from '../auth/session';
 import { isAdminEmail } from '../config';
 import { createDb } from '../db/client';
 import { upsertUserFromGoogle } from '../db/queries/users';
+import { rateLimitOAuth } from '../middleware/rateLimit';
 import type { AppEnv, Env } from '../types';
 
 function oauthConfig(env: Env): GoogleOAuthConfig {
@@ -29,6 +30,8 @@ function oauthConfig(env: Env): GoogleOAuthConfig {
 }
 
 export const auth = new Hono<AppEnv>()
+  // Throttle degli endpoint OAuth (login + callback) per IP.
+  .use('/google/*', rateLimitOAuth)
   // Avvio login: genera state + PKCE, li salva in cookie, redirige a Google.
   .get('/google/login', async (c) => {
     const state = generateState();
