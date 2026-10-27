@@ -4,7 +4,7 @@ import type { SQLiteTable } from 'drizzle-orm/sqlite-core';
 import type { Db } from './client';
 
 /** Limite di D1 sui parametri bindati per singola query. */
-export const D1_MAX_BOUND_PARAMS = 100;
+const D1_MAX_BOUND_PARAMS = 100;
 
 /**
  * INSERT multi-riga spezzate per restare sotto il limite parametri di D1, da eseguire
