@@ -7,16 +7,21 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
  * Con `optimistic`, applica subito l'aggiornamento alla cache (anche offline, quando la
  * mutation è in pausa) — usato per il logging offline. In caso di errore riconcilia con il
  * server via refetch (non ripristina uno snapshot, che cancellerebbe gli update concorrenti).
+ *
+ * Con `scope`, le mutation con lo stesso scope vengono eseguite in sequenza (es. il PATCH
+ * di una serie parte solo dopo il POST che l'ha creata).
  */
 export function useDetailMutation<TDetail, TArgs>(
   detailKey: readonly unknown[],
   listKey: readonly unknown[],
   fn: (args: TArgs) => Promise<TDetail>,
   optimistic?: (current: TDetail, args: TArgs) => TDetail,
+  scope?: { id: string },
 ) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: fn,
+    scope,
     onMutate: optimistic
       ? async (args: TArgs) => {
           await qc.cancelQueries({ queryKey: detailKey });

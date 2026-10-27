@@ -15,12 +15,17 @@ export function SessionExerciseCard({
   exercise: SessionExerciseDto;
   mutations: Mutations;
 }) {
-  // Quick-repeat: la nuova serie eredita peso/reps dell'ultima.
+  // Quick-repeat: la nuova serie eredita peso/reps dell'ultima. L'id lo genera il client:
+  // la riga non cambia id alla risposta del server, quindi non perde quanto digitato.
   function addSet() {
     const last = exercise.sets.at(-1);
     mutations.addSet.mutate({
       seId: exercise.id,
-      input: { weight: last?.weight ?? null, reps: last?.reps ?? null },
+      input: {
+        id: crypto.randomUUID(),
+        weight: last?.weight ?? null,
+        reps: last?.reps ?? null,
+      },
     });
   }
 
