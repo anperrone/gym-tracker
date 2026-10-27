@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, ne, or, sql } from 'drizzle-orm';
 import type {
   CreatePlanDayInput,
   CreatePlanExerciseInput,
@@ -35,15 +35,12 @@ export async function listPlans(db: Db, userId: string): Promise<PlanSummaryDto[
     .orderBy(desc(workoutPlans.updatedAt));
   if (plans.length === 0) return [];
 
+  // Filtro per utente via JOIN (non `IN (...)` sugli id: limite 100 parametri di D1).
   const dayRows = await db
     .select({ planId: planDays.planId })
     .from(planDays)
-    .where(
-      inArray(
-        planDays.planId,
-        plans.map((p) => p.id),
-      ),
-    );
+    .innerJoin(workoutPlans, eq(planDays.planId, workoutPlans.id))
+    .where(eq(workoutPlans.userId, userId));
   const counts = new Map<string, number>();
   for (const d of dayRows) counts.set(d.planId, (counts.get(d.planId) ?? 0) + 1);
 
@@ -91,8 +88,7 @@ export async function getPlanDetail(
     .where(eq(planDays.planId, planId))
     .orderBy(asc(planDays.sortOrder), asc(planDays.name));
 
-  const dayIds = days.map((d) => d.id);
-  const peRows = dayIds.length
+  const peRows = days.length
     ? await db
         .select({
           id: planExercises.id,
@@ -109,7 +105,8 @@ export async function getPlanDetail(
         })
         .from(planExercises)
         .innerJoin(exercises, eq(planExercises.exerciseId, exercises.id))
-        .where(inArray(planExercises.planDayId, dayIds))
+        .innerJoin(planDays, eq(planExercises.planDayId, planDays.id))
+        .where(eq(planDays.planId, planId))
         .orderBy(asc(planExercises.sortOrder))
     : [];
 
