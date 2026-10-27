@@ -125,6 +125,60 @@ describe('API allenamenti — ciclo di vita serie/esercizi', () => {
     expect(second.exercises[0].sets.map((s) => s.setNumber)).toEqual([1, 2]);
   });
 
+  describe('id serie generato dal client', () => {
+    it('usa l’id fornito ed è idempotente sul replay', async () => {
+      const { cookie } = await seedUserWithSession();
+      const { sessionId, seId } = await sessionWithExercise(cookie);
+      const id = crypto.randomUUID();
+      const path = `/api/sessions/${sessionId}/exercises/${seId}/sets`;
+
+      const first = await req(cookie, path, 'POST', { id, weight: 70 });
+      expect(first.status).toBe(201);
+      const created = (await first.json()) as WorkoutSessionDetailDto;
+      expect(created.exercises[0].sets.map((s) => s.id)).toEqual([id]);
+
+      // Replay (es. coda offline): nessuna serie duplicata.
+      const replay = (await (
+        await req(cookie, path, 'POST', { id, weight: 70 })
+      ).json()) as WorkoutSessionDetailDto;
+      expect(replay.exercises[0].sets.map((s) => s.id)).toEqual([id]);
+
+      // Subito modificabile con lo stesso id.
+      const patched = await req(cookie, `${path}/${id}`, 'PATCH', { weight: 80 });
+      expect(patched.status).toBe(200);
+    });
+
+    it('rifiuta un id già usato da una serie di un altro utente (404)', async () => {
+      const a = await seedUserWithSession();
+      const b = await seedUserWithSession();
+      const sa = await sessionWithExercise(a.cookie);
+      const sb = await sessionWithExercise(b.cookie);
+      const id = crypto.randomUUID();
+      await req(a.cookie, `/api/sessions/${sa.sessionId}/exercises/${sa.seId}/sets`, 'POST', {
+        id,
+        weight: 70,
+      });
+
+      const res = await req(
+        b.cookie,
+        `/api/sessions/${sb.sessionId}/exercises/${sb.seId}/sets`,
+        'POST',
+        { id, weight: 1 },
+      );
+      expect(res.status).toBe(404);
+      expect(JSON.stringify(await res.json())).not.toContain('70');
+    });
+
+    it('rifiuta un id non UUID (400)', async () => {
+      const { cookie } = await seedUserWithSession();
+      const { sessionId, seId } = await sessionWithExercise(cookie);
+      const res = await req(cookie, `/api/sessions/${sessionId}/exercises/${seId}/sets`, 'POST', {
+        id: 'temp-1',
+      });
+      expect(res.status).toBe(400);
+    });
+  });
+
   describe('percorsi 404 su risorse inesistenti', () => {
     const missing = crypto.randomUUID();
 

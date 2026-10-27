@@ -327,6 +327,8 @@ export const addSessionExerciseSchema = z.object({ exerciseId: z.string().min(1)
 export type AddSessionExerciseInput = z.infer<typeof addSessionExerciseSchema>;
 
 export const createSetSchema = z.object({
+  // Id generato dal client: resta stabile tra UI ottimistica e server (niente id temporanei).
+  id: z.uuid().optional(),
   weight: z.number().finite().min(0).max(10000).nullish(),
   reps: z.number().int().min(0).max(1000).nullish(),
   notes: z.string().trim().max(500).nullish(),

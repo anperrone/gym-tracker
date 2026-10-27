@@ -18,6 +18,9 @@ export function useWorkoutSession(id: string) {
 /** Tutte le mutation di una sessione (logging). */
 export function useSessionMutations(id: string) {
   const detailKey = workoutKeys.detail(id);
+  // Serie della sessione in sequenza: una modifica fatta subito dopo "Aggiungi serie"
+  // raggiunge il server solo dopo la creazione della serie.
+  const setsScope = { id: `session-sets-${id}` };
   return {
     addExercise: useDetailMutation(detailKey, workoutKeys.list, (exerciseId: string) =>
       api.addSessionExercise(id, exerciseId),
@@ -33,6 +36,7 @@ export function useSessionMutations(id: string) {
       workoutKeys.list,
       (args: { seId: string; input: CreateSetInput }) => api.addSet(id, args.seId, args.input),
       (current, args) => applyAddSet(current, args.seId, args.input),
+      setsScope,
     ),
     updateSet: useDetailMutation(
       detailKey,
@@ -40,12 +44,14 @@ export function useSessionMutations(id: string) {
       (args: { seId: string; setId: string; input: UpdateSetInput }) =>
         api.updateSet(id, args.seId, args.setId, args.input),
       (current, args) => applyUpdateSet(current, args.seId, args.setId, args.input),
+      setsScope,
     ),
     deleteSet: useDetailMutation(
       detailKey,
       workoutKeys.list,
       (args: { seId: string; setId: string }) => api.deleteSet(id, args.seId, args.setId),
       (current, args) => applyDeleteSet(current, args.seId, args.setId),
+      setsScope,
     ),
     complete: useDetailMutation(detailKey, workoutKeys.list, (durationSeconds?: number) =>
       api.updateSession(id, {

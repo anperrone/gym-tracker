@@ -406,15 +406,25 @@ export async function addSet(
     .from(sessionSets)
     .where(eq(sessionSets.sessionExerciseId, seId));
 
-  await db.insert(sessionSets).values({
-    id: crypto.randomUUID(),
-    sessionExerciseId: seId,
-    setNumber: max + 1,
-    weight: input.weight ?? null,
-    reps: input.reps ?? null,
-    notes: input.notes ?? null,
-    completed: input.completed ?? false,
-  });
+  const setId = input.id ?? crypto.randomUUID();
+  const inserted = await db
+    .insert(sessionSets)
+    .values({
+      id: setId,
+      sessionExerciseId: seId,
+      setNumber: max + 1,
+      weight: input.weight ?? null,
+      reps: input.reps ?? null,
+      notes: input.notes ?? null,
+      completed: input.completed ?? false,
+    })
+    .onConflictDoNothing()
+    .returning({ id: sessionSets.id });
+  if (inserted.length === 0) {
+    // Id già esistente: replay idempotente solo se la serie è di questo esercizio dell'utente.
+    if (!(await setInOwnedSession(db, userId, sessionId, seId, setId))) return null;
+    return getSessionDetail(db, userId, sessionId);
+  }
   await touchSession(db, sessionId);
   return getSessionDetail(db, userId, sessionId);
 }

@@ -31,6 +31,12 @@ describe('optimistic set helpers', () => {
     expect(base.exercises[0].sets).toHaveLength(1);
   });
 
+  it('applyAddSet usa l’id fornito dal client (stabile dopo la risposta del server)', () => {
+    const id = crypto.randomUUID();
+    const next = applyAddSet(base, 'se1', { id, weight: 70 });
+    expect(next.exercises[0].sets[1].id).toBe(id);
+  });
+
   it('applyUpdateSet cambia solo i campi forniti', () => {
     const next = applyUpdateSet(base, 'se1', 'set1', { weight: 65 });
     expect(next.exercises[0].sets[0].weight).toBe(65);

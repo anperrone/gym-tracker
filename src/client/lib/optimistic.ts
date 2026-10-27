@@ -14,7 +14,10 @@ function mapExercise(
   };
 }
 
-/** Aggiunge una serie in coda (id temporaneo finché non arriva la risposta del server). */
+/**
+ * Aggiunge una serie in coda. Con `input.id` (generato dal client e inviato al server) l'id
+ * resta lo stesso dopo la risposta; senza, id temporaneo finché il server non risponde.
+ */
 export function applyAddSet(
   detail: WorkoutSessionDetailDto,
   seId: string,
@@ -27,7 +30,7 @@ export function applyAddSet(
       sets: [
         ...ex.sets,
         {
-          id: `temp-${crypto.randomUUID()}`,
+          id: input.id ?? `temp-${crypto.randomUUID()}`,
           setNumber: nextNumber,
           weight: input.weight ?? null,
           reps: input.reps ?? null,
