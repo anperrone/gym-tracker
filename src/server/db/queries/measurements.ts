@@ -4,6 +4,7 @@ import type {
   MeasurementEntryDto,
   MeasurementTypeDto,
 } from '../../../shared/schemas';
+import { chunkedInserts } from '../batch';
 import type { Db } from '../client';
 import { measurementEntries, measurementTypes, measurementValues } from '../schema';
 
@@ -95,7 +96,9 @@ export async function createMeasurement(
       notes: input.notes ?? null,
       clientId: input.clientId ?? null,
     }),
-    db.insert(measurementValues).values(
+    ...chunkedInserts(
+      db,
+      measurementValues,
       input.values.map((v) => ({
         id: crypto.randomUUID(),
         entryId,

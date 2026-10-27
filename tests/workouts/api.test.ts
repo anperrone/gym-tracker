@@ -149,6 +149,31 @@ describe('API allenamenti', () => {
     expect(detail.exercises[1].sets).toHaveLength(0);
   });
 
+  it('pre-popola un giorno oltre il limite di 100 parametri D1 per query', async () => {
+    const { userId, cookie } = await seedUserWithSession();
+    const db = createDb(env.DB);
+    const planId = crypto.randomUUID();
+    await db.insert(workoutPlans).values({ id: planId, userId, name: 'P' });
+    const dayId = crypto.randomUUID();
+    await db.insert(planDays).values({ id: dayId, planId, name: 'Upper' });
+    // 20 esercizi × 4 serie = 80 serie: una singola INSERT supererebbe il limite.
+    await db.insert(planExercises).values(
+      Array.from({ length: 20 }, (_, i) => ({
+        id: crypto.randomUUID(),
+        planDayId: dayId,
+        exerciseId: 'ex_bench_press',
+        sortOrder: i,
+        targetSets: 4,
+      })),
+    );
+
+    const res = await start(cookie, { clientId: crypto.randomUUID(), planDayId: dayId });
+    expect(res.status).toBe(201);
+    const detail = (await res.json()) as WorkoutSessionDetailDto;
+    expect(detail.exercises).toHaveLength(20);
+    expect(detail.exercises.flatMap((e) => e.sets)).toHaveLength(80);
+  });
+
   it('rifiuta un exerciseId non visibile (400)', async () => {
     const { cookie } = await seedUserWithSession();
     const started = (await (

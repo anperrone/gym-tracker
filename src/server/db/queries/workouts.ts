@@ -10,6 +10,7 @@ import type {
   WorkoutSessionDetailDto,
   WorkoutSessionSummaryDto,
 } from '../../../shared/schemas';
+import { chunkedInserts } from '../batch';
 import type { Db } from '../client';
 import {
   exercises,
@@ -224,15 +225,22 @@ export async function startSession(
   const planDayId = owned && input.planDayId ? input.planDayId : null;
 
   const sessionId = crypto.randomUUID();
+  const prepopulate = planDayId
+    ? await prepopulateFromPlanDay(db, userId, sessionId, planDayId)
+    : [];
   try {
-    await db.insert(workoutSessions).values({
-      id: sessionId,
-      userId,
-      planDayId,
-      clientId: input.clientId,
-      notes: input.notes ?? null,
-      ...(input.performedAt ? { performedAt: new Date(input.performedAt) } : {}),
-    });
+    // Sessione + snapshot nello stesso batch (atomico): un errore non lascia sessioni vuote.
+    await db.batch([
+      db.insert(workoutSessions).values({
+        id: sessionId,
+        userId,
+        planDayId,
+        clientId: input.clientId,
+        notes: input.notes ?? null,
+        ...(input.performedAt ? { performedAt: new Date(input.performedAt) } : {}),
+      }),
+      ...prepopulate,
+    ]);
   } catch (err) {
     // Corsa: un replay concorrente ha già creato la sessione (unique su user+client_id).
     const raced = await existingSessionResult(db, userId, input.clientId);
@@ -240,23 +248,20 @@ export async function startSession(
     throw err;
   }
 
-  if (planDayId) await prepopulateFromPlanDay(db, userId, sessionId, planDayId);
-
   const detail = await getSessionDetail(db, userId, sessionId);
   if (!detail) throw new Error('sessione creata ma non recuperabile');
   return { created: true, detail };
 }
 
-/** Copia gli esercizi del giorno di scheda nella sessione (snapshot), atomicamente. */
+/** Insert che copiano gli esercizi del giorno di scheda nella sessione (snapshot). */
 async function prepopulateFromPlanDay(
   db: Db,
   userId: string,
   sessionId: string,
   planDayId: string,
-): Promise<void> {
+): Promise<BatchItem<'sqlite'>[]> {
   const planExs = await ownedPlanDayExercises(db, userId, planDayId);
   const exRows = planExs.map((pe, i) => ({ seId: crypto.randomUUID(), pe, sortOrder: i }));
-  if (exRows.length === 0) return;
 
   const setRows = exRows.flatMap(({ seId, pe }) =>
     Array.from({ length: pe.targetSets ?? 0 }, (_, n) => ({
@@ -266,8 +271,11 @@ async function prepopulateFromPlanDay(
       weight: pe.targetWeight ?? null,
     })),
   );
-  const statements: BatchItem<'sqlite'>[] = [
-    db.insert(sessionExercises).values(
+  // Spezzate: una scheda reale supera facilmente i 100 parametri di D1 in una sola INSERT.
+  return [
+    ...chunkedInserts(
+      db,
+      sessionExercises,
       exRows.map(({ seId, pe, sortOrder }) => ({
         id: seId,
         workoutSessionId: sessionId,
@@ -277,9 +285,8 @@ async function prepopulateFromPlanDay(
         sortOrder,
       })),
     ),
+    ...chunkedInserts(db, sessionSets, setRows),
   ];
-  if (setRows.length > 0) statements.push(db.insert(sessionSets).values(setRows));
-  await db.batch(statements as [BatchItem<'sqlite'>, ...BatchItem<'sqlite'>[]]);
 }
 
 export async function updateSession(
