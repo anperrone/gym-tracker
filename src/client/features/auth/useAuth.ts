@@ -6,16 +6,21 @@ import { clearOfflineCache } from '@/lib/query';
 export const meQueryKey = ['me'] as const;
 
 export function useAuth() {
-  const { data, isPending } = useQuery({
+  const { data, isPending, isFetching } = useQuery({
     queryKey: meQueryKey,
     queryFn: fetchMe,
     staleTime: 60_000,
+    // Riverifica sempre al mount (anche con cache fresca): copre il ritorno dal login e
+    // un eventuale "non autenticato" già persistito da versioni precedenti.
+    refetchOnMount: 'always',
     retry: false,
   });
 
   return {
     user: data ?? null,
-    isLoading: isPending,
+    // Un "non autenticato" in cache non è definitivo finché il server non ha risposto:
+    // la sessione potrebbe essere appena stata creata (es. ritorno dal login Google).
+    isLoading: isPending || (!data && isFetching),
     isAuthenticated: Boolean(data),
   };
 }
