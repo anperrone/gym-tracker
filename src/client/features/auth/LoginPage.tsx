@@ -1,6 +1,12 @@
+import { Navigate } from '@tanstack/react-router';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useAuth } from './useAuth';
 
 export function LoginPage() {
+  // Sessione già valida (es. login completato): niente pagina di login, dritti nell'app.
+  const { isAuthenticated } = useAuth();
+  if (isAuthenticated) return <Navigate to="/" />;
+
   return (
     <main className="min-h-dvh bg-bg px-6 text-text">
       <div className="flex justify-end pt-4">
