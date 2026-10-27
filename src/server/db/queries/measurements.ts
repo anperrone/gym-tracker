@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, or } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, or } from 'drizzle-orm';
 import type {
   CreateMeasurementInput,
   MeasurementEntryDto,
@@ -46,15 +46,17 @@ export async function listMeasurements(db: Db, userId: string): Promise<Measurem
 
   if (entries.length === 0) return [];
 
+  // Filtro per utente via JOIN: un `IN (...)` con tutti gli id delle misurazioni
+  // supererebbe il limite di 100 parametri per query di D1.
   const values = await db
-    .select()
+    .select({
+      entryId: measurementValues.entryId,
+      typeId: measurementValues.typeId,
+      value: measurementValues.value,
+    })
     .from(measurementValues)
-    .where(
-      inArray(
-        measurementValues.entryId,
-        entries.map((e) => e.id),
-      ),
-    );
+    .innerJoin(measurementEntries, eq(measurementValues.entryId, measurementEntries.id))
+    .where(eq(measurementEntries.userId, userId));
 
   const byEntry = new Map<string, { typeId: string; value: number }[]>();
   for (const v of values) {

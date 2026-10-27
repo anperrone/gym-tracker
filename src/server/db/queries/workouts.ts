@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, or, sql } from 'drizzle-orm';
 import type { BatchItem } from 'drizzle-orm/batch';
 import type {
   AddSessionExerciseInput,
@@ -60,17 +60,15 @@ export async function getSessionDetail(
     .where(eq(sessionExercises.workoutSessionId, id))
     .orderBy(asc(sessionExercises.sortOrder));
 
-  const exIds = exRows.map((e) => e.id);
-  const setRows = exIds.length
-    ? await db
-        .select()
-        .from(sessionSets)
-        .where(inArray(sessionSets.sessionExerciseId, exIds))
-        .orderBy(asc(sessionSets.setNumber))
-    : [];
+  const setRows = await db
+    .select({ set: sessionSets })
+    .from(sessionSets)
+    .innerJoin(sessionExercises, eq(sessionSets.sessionExerciseId, sessionExercises.id))
+    .where(eq(sessionExercises.workoutSessionId, id))
+    .orderBy(asc(sessionSets.setNumber));
 
   const setsByExercise = new Map<string, WorkoutSessionDetailDto['exercises'][number]['sets']>();
-  for (const s of setRows) {
+  for (const { set: s } of setRows) {
     const arr = setsByExercise.get(s.sessionExerciseId) ?? [];
     arr.push({
       id: s.id,
@@ -105,50 +103,28 @@ export async function getSessionDetail(
 
 /** Elenco sessioni dell'utente (più recenti prima) con conteggi esercizi/serie. */
 export async function listSessions(db: Db, userId: string): Promise<WorkoutSessionSummaryDto[]> {
-  const sessions = await db
-    .select()
+  // Conteggi aggregati in SQL filtrando per utente: niente `IN (...)` con tutti gli id della
+  // storia, che supererebbe il limite di 100 parametri per query di D1.
+  const rows = await db
+    .select({
+      session: workoutSessions,
+      exerciseCount: sql<number>`count(distinct ${sessionExercises.id})`,
+      setCount: sql<number>`count(${sessionSets.id})`,
+    })
     .from(workoutSessions)
+    .leftJoin(sessionExercises, eq(sessionExercises.workoutSessionId, workoutSessions.id))
+    .leftJoin(sessionSets, eq(sessionSets.sessionExerciseId, sessionExercises.id))
     .where(eq(workoutSessions.userId, userId))
+    .groupBy(workoutSessions.id)
     .orderBy(desc(workoutSessions.performedAt));
-  if (sessions.length === 0) return [];
 
-  const ids = sessions.map((s) => s.id);
-  const exRows = await db
-    .select({ sessionId: sessionExercises.workoutSessionId, id: sessionExercises.id })
-    .from(sessionExercises)
-    .where(inArray(sessionExercises.workoutSessionId, ids));
-
-  const exCount = new Map<string, number>();
-  const exToSession = new Map<string, string>();
-  for (const e of exRows) {
-    exCount.set(e.sessionId, (exCount.get(e.sessionId) ?? 0) + 1);
-    exToSession.set(e.id, e.sessionId);
-  }
-
-  const setCount = new Map<string, number>();
-  if (exRows.length > 0) {
-    const setRows = await db
-      .select({ sessionExerciseId: sessionSets.sessionExerciseId })
-      .from(sessionSets)
-      .where(
-        inArray(
-          sessionSets.sessionExerciseId,
-          exRows.map((e) => e.id),
-        ),
-      );
-    for (const s of setRows) {
-      const sessionId = exToSession.get(s.sessionExerciseId);
-      if (sessionId) setCount.set(sessionId, (setCount.get(sessionId) ?? 0) + 1);
-    }
-  }
-
-  return sessions.map((s) => ({
+  return rows.map(({ session: s, exerciseCount, setCount }) => ({
     id: s.id,
     status: s.status,
     performedAt: s.performedAt.toISOString(),
     planDayId: s.planDayId,
-    exerciseCount: exCount.get(s.id) ?? 0,
-    setCount: setCount.get(s.id) ?? 0,
+    exerciseCount,
+    setCount,
   }));
 }
 
